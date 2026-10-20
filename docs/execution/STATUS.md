@@ -34,7 +34,7 @@ TENANT-01 menutup cross-tenant admin object checks dan memperbaiki runtime role 
 
 Langkah berikut: Lanjutkan PILOT-01 sesuai environment gate; development browser sudah dapat dipakai untuk uji manual tenant-scoped.
 
-Blocked PILOT-01: Staging health/readiness, aktivasi/login, restore dump terisolasi, dan startup/readiness API build sebelumnya sudah terverifikasi. Worker retention berfungsi tetapi image mewariskan healthcheck HTTP yang salah; perbaikan Compose lokal menunggu deploy. Penolakan header tenant tanpa sesi lulus, namun smoke lintas-organisasi dengan sesi aktif belum dijalankan; kompatibilitas portal sebelumnya juga belum diuji. — Push perubahan healthcheck Compose dan verifikasi worker retention setelah deploy. Uji akses negatif memakai session aktif terhadap objek organisasi lain serta uji portal image sebelumnya bila diperlukan; catat evidence, lalu tinjau acceptance PILOT-01 yang tersisa.
+Blocked PILOT-01: Deployment commit 8e7e3f0, health/readiness, aktivasi/login, worker retention, restore dump terisolasi, dan startup/readiness API build sebelumnya sudah lulus. Request tenant ID tanpa session ditolak 403. Portal staging belum memiliki organisasi/device aktif sehingga authenticated cross-tenant dan map/history dengan data sintetis, serta pemeriksaan konfigurasi tile, belum dapat diselesaikan. — Siapkan data tenant sintetis yang diotorisasi (dua organisasi, membership terbatas, device/session/posisi sintetis), verifikasi akses tenant lintas organisasi ditolak serta peta/history staging bekerja, dan catat hasil tanpa menyimpan koordinat/token/secret di evidence. Setelah itu tinjau acceptance PILOT-01.
 
 Batas verifikasi:
 
