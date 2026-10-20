@@ -1,0 +1,27 @@
+{$STAGING_DOMAIN} {
+	encode zstd gzip
+
+	@api path /v1 /v1/*
+	handle @api {
+		reverse_proxy api:8080
+	}
+
+	@health path /healthz /readyz
+	handle @health {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		header {
+			X-Content-Type-Options nosniff
+			Referrer-Policy strict-origin-when-cross-origin
+			X-Frame-Options DENY
+			Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; worker-src 'self' blob:"
+			Permissions-Policy "camera=(), microphone=(), geolocation=()"
+			-Server
+		}
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -29,6 +29,10 @@ tracking-storage = { path = "../../crates/tracking-storage" }
 name = "authctl"
 path = "src/bin/authctl.rs"
 
+[[bin]]
+name = "migrate"
+path = "src/bin/migrate.rs"
+
 [dev-dependencies]
 tower.workspace = true
 futures-util.workspace = true

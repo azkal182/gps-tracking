@@ -1087,7 +1087,7 @@
       "phase": "P11",
       "title": "Image dan deployment preflight",
       "scope": "mvp",
-      "status": "todo",
+      "status": "blocked",
       "depends_on": [
         "OPS-04"
       ],
@@ -1097,19 +1097,22 @@
       "references": [
         "docs/gps-tracking-technical-decisions.md",
         "docs/gps-tracking-database-operations.md",
-        "docs/execution/DECISIONS.md"
+        "docs/execution/DECISIONS.md",
+        "docs/staging-vps-github-cicd.md"
       ],
       "acceptance": [
         "Multi-stage image static/Rust, Caddy TLS routing, non-root, readiness/migration preflight dan rollback guide.",
         "Local/staging smoke passes; daftar domain/SMTP/map/backup/host prerequisites terverifikasi tanpa secret evidence.",
         "Sebelum pilot, uji image/build aplikasi sebelumnya terhadap schema hasil migration di staging: startup/readiness dan negative tenant-authorization smoke lulus; simpan digest kedua build dan hasilnya. Jika build sebelumnya belum pernah production, gunakan kandidat dari code state berurutan. Uji gagal/tidak tersedia berarti pilot tetap tertahan."
       ],
-      "owner": null,
-      "started_at": null,
+      "owner": "Codex",
+      "started_at": "2026-10-20",
       "completed_at": null,
-      "blocked_reason": null,
-      "unblock_action": null,
-      "evidence": []
+      "blocked_reason": "VPS dan GitHub staging environment/secrets telah disiapkan pengguna; SMTP staging belum dikonfigurasi. Deployment dan verifikasi remote belum dijalankan, sehingga health/tenant smoke, restore backup, kompatibilitas image sebelumnya terhadap schema, dan alur aktivasi email belum memiliki evidence. Image portal, konfigurasi Compose, dan Caddy lulus validasi lokal; build penuh image API akan dilakukan oleh GitHub CI karena ruang disk lokal terbatas.",
+      "unblock_action": "Commit dan push perubahan PILOT-01 ke main; pantau CI/build/deploy di GitHub Actions. Verifikasi health/readiness dan smoke test sintetis termasuk tenant authorization, uji restore backup serta kompatibilitas image sebelumnya terhadap schema; konfigurasi SMTP staging sebelum menguji aktivasi akun/email. Catat digest dan evidence aktual.",
+      "evidence": [
+        "docs/execution/evidence/PILOT-01.md"
+      ]
     },
     {
       "id": "PILOT-02",
@@ -1255,7 +1258,7 @@
         "docs/execution/DECISIONS.md"
       ],
       "acceptance": [
-        "POSITION_RETENTION_DAYS tervalidasi 1\u201336500, default 365, dan digunakan ingestion serta retention worker.",
+        "POSITION_RETENTION_DAYS tervalidasi 1–36500, default 365, dan digunakan ingestion serta retention worker.",
         "Expiry baru memakai konfigurasi; penurunan konfigurasi membuat worker purge row lama tanpa membuka akses payload lintas tenant.",
         "Fresh/upgrade migration, default kalender, nilai 60 hari, purge/RLS dan regression tests lulus; dokumentasi .env dan operasi menjelaskan rollout."
       ],

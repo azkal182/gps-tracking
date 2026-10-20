@@ -92,3 +92,102 @@ jobs:
 
       - name: Build portal
         run: pnpm build
+
+  publish-staging-images:
+    name: Build and publish staging images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set lowercase image owner
+        id: image-owner
+        env:
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: echo "owner=${REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.server
+          push: true
+          tags: ghcr.io/${{ steps.image-owner.outputs.owner }}/backend-tracker-api:${{ github.sha }}
+
+      - name: Build and publish portal image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.portal
+          push: true
+          tags: ghcr.io/${{ steps.image-owner.outputs.owner }}/backend-tracker-portal:${{ github.sha }}
+          build-args: |
+            VITE_MAPTILER_KEY=${{ vars.STAGING_MAPTILER_KEY }}
+            VITE_MAP_STYLE_URL=${{ vars.STAGING_MAP_STYLE_URL }}
+            VITE_API_BASE_URL=/v1
+
+  deploy-staging:
+    name: Deploy staging to VPS
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: publish-staging-images
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://${{ vars.STAGING_DOMAIN }}
+    concurrency:
+      group: staging-deployment
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure strict SSH access
+        env:
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$STAGING_SSH_KEY" > "$HOME/.ssh/staging_key"
+          chmod 600 "$HOME/.ssh/staging_key"
+          printf '%s\n' "$STAGING_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Copy staging scripts to VPS
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+        run: |
+          tar -czf - ops/staging \
+            | ssh -i "$HOME/.ssh/staging_key" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              "$STAGING_USER@$STAGING_HOST" \
+              'mkdir -p /opt/gps-tracker && chmod 700 /opt/gps-tracker && tar -xzf - -C /opt/gps-tracker'
+
+      - name: Log in and deploy immutable image tag
+        env:
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          printf '%s' "$GHCR_READ_TOKEN" \
+            | ssh -i "$HOME/.ssh/staging_key" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              "$STAGING_USER@$STAGING_HOST" \
+              "docker login ghcr.io --username '$GHCR_USERNAME' --password-stdin && IMAGE_TAG='$IMAGE_TAG' /opt/gps-tracker/ops/staging/deploy.sh"

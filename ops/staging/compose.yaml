@@ -1,0 +1,115 @@
+services:
+  db:
+    image: postgis/postgis:17-3.5-alpine@sha256:894f570c0cf0664ed5576a8fd5d5bfb8fb1b19d592885b686c3a88c8bd90c41f
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./provision-roles.sql:/provision/provision-roles.sql:ro
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks: [private]
+
+  migrate:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/backend-tracker-api:${IMAGE_TAG:?Set IMAGE_TAG}
+    command: ['migrate']
+    restart: 'no'
+    environment:
+      MIGRATOR_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [private]
+    profiles: [tools]
+
+  api:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/backend-tracker-api:${IMAGE_TAG:?Set IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      APP_ENV: staging
+      BIND_ADDR: 0.0.0.0:8080
+      PUBLIC_ORIGIN: https://${STAGING_DOMAIN:?Set STAGING_DOMAIN in .env}
+      DATABASE_URL: postgres://gps_http_auth:${TRACKER_AUTH_DB_PASSWORD:?Set tracker DB role passwords}@db:5432/${POSTGRES_DB}
+      AUTH_DATABASE_URL: postgres://gps_http_auth:${TRACKER_AUTH_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      TRACKING_DATABASE_URL: postgres://gps_http_app:${TRACKER_APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      PLATFORM_DATABASE_URL: postgres://gps_http_platform:${TRACKER_PLATFORM_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      MAILER_DATABASE_URL: postgres://gps_http_mailer:${TRACKER_MAILER_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:?Set MFA_ENCRYPTION_KEY in .env}
+      MFA_ENCRYPTION_KEY_VERSION: ${MFA_ENCRYPTION_KEY_VERSION:-1}
+      OUTBOX_ENCRYPTION_KEY: ${OUTBOX_ENCRYPTION_KEY:?Set OUTBOX_ENCRYPTION_KEY in .env}
+      SMTP_HOST: ${SMTP_HOST:?Configure a staging SMTP relay}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_TLS: ${SMTP_TLS:-starttls}
+      SMTP_FROM: ${SMTP_FROM:?Set SMTP_FROM in .env}
+      SMTP_USERNAME: ${SMTP_USERNAME:?Set SMTP_USERNAME in .env}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?Set SMTP_PASSWORD in .env}
+      POSITION_FRESHNESS_SECONDS: ${POSITION_FRESHNESS_SECONDS:-60}
+      DEVICE_OFFLINE_TIMEOUT_SECONDS: ${DEVICE_OFFLINE_TIMEOUT_SECONDS:-180}
+      POSITION_RETENTION_DAYS: ${POSITION_RETENTION_DAYS:-365}
+      RUST_LOG: server=info,tower_http=info
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'curl --fail --silent http://127.0.0.1:8080/readyz || exit 1',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks: [private]
+
+  retention:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/backend-tracker-api:${IMAGE_TAG:?Set IMAGE_TAG}
+    command:
+      [
+        'sh',
+        '-c',
+        'while true; do /usr/local/bin/retentionctl || exit 1; sleep 3600; done',
+      ]
+    restart: unless-stopped
+    environment:
+      RETENTION_DATABASE_URL: postgres://gps_http_retention:${TRACKER_RETENTION_DB_PASSWORD:?Set TRACKER_RETENTION_DB_PASSWORD in .env}@db:5432/${POSTGRES_DB}
+      POSITION_RETENTION_DAYS: ${POSITION_RETENTION_DAYS:-365}
+      RUST_LOG: retentionctl=info
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [private]
+
+  portal:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/backend-tracker-portal:${IMAGE_TAG:?Set IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      STAGING_DOMAIN: ${STAGING_DOMAIN:?Set STAGING_DOMAIN in .env}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [private]
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  private:
+    driver: bridge

@@ -49,3 +49,4 @@ Instruksi repository: [AGENTS.md](../AGENTS.md). Skill lokal berada di `.agents/
 Gunakan `python3 scripts/project_tracker.py status` untuk memeriksa progres aktual. Tugas setup/planning tidak dihitung sebagai implementasi produk.
 
 Panduan layanan dan quality checks lokal: [Environment development](./execution/development-environment.md).
+Panduan deploy staging ke VPS dan CI/CD GitHub: [Staging VPS & GitHub Actions](./staging-vps-github-cicd.md).

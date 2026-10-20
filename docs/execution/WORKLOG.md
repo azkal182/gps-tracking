@@ -1,5 +1,9 @@
 # Worklog proyek
 
+## 2026-10-20 — PILOT-01 preflight staging disiapkan; smoke blocked
+
+Disiapkan multi-stage image Rust/portal+Caddy, Compose staging privat, SQLx one-shot migration, runtime DB roles terbatas, backup sebelum migrasi, worker retensi, rollback image tanpa rollback schema, dan panduan VPS/GitHub Actions. CI hanya mem-publish image dan deploy SHA saat push `main` lulus quality job. Rust format/check/clippy/tests, portal lint/typecheck/tests/build, dan shell syntax lulus. Portal image berhasil dibangun lokal; Compose dan Caddy lolos validasi. Dockerfile API lolos static check, tetapi image Rust penuh tidak dibangun karena ruang lokal tersisa sekitar 4 GiB; staging smoke belum dapat berjalan tanpa VPS/GitHub environment. Domain/VPS/SMTP/GitHub secrets juga belum dikonfigurasi; PILOT-01 blocked dan bukan klaim MVP live. Evidence: [PILOT-01](./evidence/PILOT-01.md).
+
 ## 2026-10-19 — PLAN-01 selesai
 
 Baseline planning MVP v1.0 difinalkan pada sesi pengguna. Ini kemajuan perencanaan, bukan feature implementation. Evidence: [PLAN-01](./evidence/PLAN-01.md).
@@ -238,4 +242,3 @@ Penyebab umum 403 adalah `session_user` memaksa exact Origin pada handler read-o
 ## 2026-10-20 — TENANT-01 batas tenant admin dan realtime selesai
 
 Audit browser menemukan root cause gabungan: server dev memakai `tracker_dev` superuser sehingga RLS terlewati; query list target/device tidak memiliki tenant predicate eksplisit; helper izin admin menerima ID resource tanpa cek kepemilikan tenant. Target foreign lalu diberi snapshot inactive dan ikut subscription, yang ditolak oleh pemeriksaan WebSocket yang lebih ketat. Ditambahkan migration yang memvalidasi identitas resource tenant, helper enumerasi UUID tenant aktif untuk worker realtime, tenant context pada principal session WS, predicate tenant eksplisit, login runtime development auth/app least-privilege serta script provisioning yang idempotent. Integration regression devices lulus termasuk simulated BYPASSRLS; LIVE-02 lulus dengan auth/app capability pools. Browser Histori kini menampilkan 2 device organisasi aktif dan Live menunjukkan “Realtime tersambung”. Format, server tests (19 pass), Clippy, portal typecheck dan 31 portal tests lulus. Evidence: [TENANT-01](./evidence/TENANT-01.md).
-

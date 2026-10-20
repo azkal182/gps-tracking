@@ -1,0 +1,19 @@
+FROM node:24.21.0-bookworm-slim AS build
+WORKDIR /workspace
+RUN corepack enable && corepack prepare pnpm@12.11.2 --activate
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .node-version ./
+COPY apps/portal/package.json apps/portal/package.json
+RUN pnpm install --frozen-lockfile
+COPY apps/portal apps/portal
+ARG VITE_MAPTILER_KEY=
+ARG VITE_MAP_STYLE_URL=
+ARG VITE_API_BASE_URL=/v1
+ENV VITE_MAPTILER_KEY=${VITE_MAPTILER_KEY}
+ENV VITE_MAP_STYLE_URL=${VITE_MAP_STYLE_URL}
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+RUN pnpm --filter @backend-tracker/portal build
+
+FROM caddy:2.10.2-alpine AS runtime
+COPY ops/staging/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /workspace/apps/portal/dist /srv
+EXPOSE 80 443 443/udp

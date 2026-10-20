@@ -628,7 +628,7 @@ Evidence: [TENANT-01.md](../../docs/execution/evidence/TENANT-01.md)
 
 ### PILOT-01 — Image dan deployment preflight
 
-Status: **todo** · Scope: mvp · Owner: —
+Status: **blocked** · Scope: mvp · Owner: Codex
 
 Dependensi: OPS-04
 
@@ -639,9 +639,9 @@ Acceptance:
 - Local/staging smoke passes; daftar domain/SMTP/map/backup/host prerequisites terverifikasi tanpa secret evidence.
 - Sebelum pilot, uji image/build aplikasi sebelumnya terhadap schema hasil migration di staging: startup/readiness dan negative tenant-authorization smoke lulus; simpan digest kedua build dan hasilnya. Jika build sebelumnya belum pernah production, gunakan kandidat dari code state berurutan. Uji gagal/tidak tersedia berarti pilot tetap tertahan.
 
-Sumber: [gps-tracking-technical-decisions.md](../../docs/gps-tracking-technical-decisions.md), [gps-tracking-database-operations.md](../../docs/gps-tracking-database-operations.md), [DECISIONS.md](../../docs/execution/DECISIONS.md)
+Sumber: [gps-tracking-technical-decisions.md](../../docs/gps-tracking-technical-decisions.md), [gps-tracking-database-operations.md](../../docs/gps-tracking-database-operations.md), [DECISIONS.md](../../docs/execution/DECISIONS.md), [staging-vps-github-cicd.md](../../docs/staging-vps-github-cicd.md)
 
-Evidence: belum tersedia
+Evidence: [PILOT-01.md](../../docs/execution/evidence/PILOT-01.md)
 
 ### PILOT-02 — Pilot deployment terotorisasi
 

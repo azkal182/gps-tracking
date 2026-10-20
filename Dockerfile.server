@@ -1,0 +1,21 @@
+FROM rust:1.99.1-bookworm AS build
+WORKDIR /workspace
+COPY . .
+RUN cargo build --locked --release -p server --bins
+
+FROM debian:bookworm-slim AS runtime
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 10001 tracker \
+    && useradd --system --uid 10001 --gid tracker --home-dir /nonexistent --shell /usr/sbin/nologin tracker
+WORKDIR /app
+COPY --from=build --chown=tracker:tracker /workspace/target/release/server /usr/local/bin/server
+COPY --from=build --chown=tracker:tracker /workspace/target/release/migrate /usr/local/bin/migrate
+COPY --from=build --chown=tracker:tracker /workspace/target/release/retentionctl /usr/local/bin/retentionctl
+COPY --from=build --chown=tracker:tracker /workspace/target/release/authctl /usr/local/bin/authctl
+ENV BIND_ADDR=0.0.0.0:8080
+EXPOSE 8080
+USER tracker:tracker
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD curl --fail --silent http://127.0.0.1:8080/readyz || exit 1
+CMD ["server"]
