@@ -1108,8 +1108,8 @@
       "owner": "Codex",
       "started_at": "2026-10-20",
       "completed_at": null,
-      "blocked_reason": "Staging menerima email aktivasi, tetapi smoke test menemukan portal tidak membaca token fragment (#token=...) yang dikirim backend. Perbaikan parser dan regression test lokal lulus; deployment portal hasil perbaikan dan aktivasi/MFA browser belum diverifikasi. Smoke tenant, restore backup, dan kompatibilitas image sebelumnya terhadap schema juga masih memerlukan evidence.",
-      "unblock_action": "Push perbaikan parser token aktivasi, tunggu GitHub Actions deploy berhasil, lalu buka ulang tautan aktivasi yang masih berlaku dan verifikasi aktivasi/MFA. Lengkapi smoke tenant, tes restore backup serta kompatibilitas image sebelumnya terhadap schema; catat digest dan evidence aktual.",
+      "blocked_reason": "Staging health/readiness, aktivasi/login, restore dump terisolasi, dan startup/readiness API build sebelumnya sudah terverifikasi. Worker retention berfungsi tetapi image mewariskan healthcheck HTTP yang salah; perbaikan Compose lokal menunggu deploy. Penolakan header tenant tanpa sesi lulus, namun smoke lintas-organisasi dengan sesi aktif belum dijalankan; kompatibilitas portal sebelumnya juga belum diuji.",
+      "unblock_action": "Push perubahan healthcheck Compose dan verifikasi worker retention setelah deploy. Uji akses negatif memakai session aktif terhadap objek organisasi lain serta uji portal image sebelumnya bila diperlukan; catat evidence, lalu tinjau acceptance PILOT-01 yang tersisa.",
       "evidence": [
         "docs/execution/evidence/PILOT-01.md"
       ]

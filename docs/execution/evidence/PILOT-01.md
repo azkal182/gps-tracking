@@ -57,3 +57,15 @@ nyata ke staging sebelum backup/restore dan alerting dipastikan.
 ## Temuan smoke aktivasi staging (2026-10-20)
 
 Pengguna menerima pesan aktivasi, tetapi halaman menampilkan `Token aktivasi tidak ditemukan` dan tidak mengirim request API. Backend sengaja meletakkan token pada URL fragment `#token=...`; portal hanya membaca query string sehingga token tidak terbaca. Parser portal kini membaca token query maupun fragment, lalu menghapus token dari address bar sebelum digunakan. Regression test memastikan token fragment dikirim hanya saat submit dan hash dibersihkan. Verifikasi lokal: Prettier, portal lint, typecheck, dan Vitest 8 file / 32 test lulus. Deployment perbaikan dan aktivasi browser staging masih menunggu.
+
+## Verifikasi staging langsung (2026-10-20)
+
+Dengan akses SSH staging yang diotorisasi pengguna, `docker compose ps` menunjukkan API dan DB healthy; `https://staging.banza.web.id/healthz` mengembalikan `{"status":"ok"}` dan `/readyz` mengembalikan `{"status":"ready"}`. Log retention menunjukkan purge berhasil (semua kategori 0), tetapi status container `unhealthy` karena image API membawa healthcheck HTTP yang tidak sesuai untuk worker tanpa listener HTTP. Compose kini menonaktifkan inherited healthcheck untuk service retention; perlu deploy ulang untuk memverifikasi status container baru.
+
+Smoke autentikasi email/aktivasi dan login browser berhasil menurut pengguna setelah image portal `2c4db4b21836903c695550e406084622aa584544` di-deploy. Image API build itu memiliki digest `sha256:048243130954460aa125668b8eb68132fcc7a2d1b4931a7d9feeeff4e0dda7c9`; portal `sha256:512b46a7d236350099c6487140b43655377d4fc6ed549dd8c3570f351c3ccbd8`.
+
+Uji kompatibilitas menjalankan API image build sebelumnya `4faa2eda765d785c00c7d02c631b3d051dd790a1` terhadap schema staging saat ini di container sementara yang hanya bind ke loopback VPS. `/readyz` menjadi ready dan request `GET /v1/organization` dengan `X-Organization-Id` sintetis tanpa session ditolak HTTP 403. Digest API sebelumnya `sha256:616a16b4ad47f5884fcc83f6849d7c1a21a5b4553b44a9da16b5ad14658c4073`; portal sebelumnya `sha256:afa0d1f0ba404a13da0ae831b9f9b2adef0349aacd1426967fab0200c3849b65`. Container sementara dihapus setelah smoke. Ini membuktikan penolakan tenant header tanpa session; uji akses lintas-organisasi memakai session aktif belum dilakukan.
+
+Restore aktual dump `tracker-20261020T065642Z.dump` lulus di database `template0` pada container PostGIS sementara dengan `--no-owner --no-acl --exit-on-error`, role capability sintetis, dan jaringan Docker `none`. Restore berisi 19 migrasi dan PostGIS 3.5.7; container dihapus setelah verifikasi. Uji ini tidak mengukur RPO/RTO maupun pemulihan dari salinan off-host.
+
+Batas tersisa: deploy healthcheck Compose terbaru dan cek status retention; uji negatif dengan session terautentikasi lintas dua organisasi; kompatibilitas portal sebelumnya belum diuji di browser. Jangan tandai PILOT-01 selesai sebelum cakupan tersisa ini direkam.

@@ -34,7 +34,7 @@ TENANT-01 menutup cross-tenant admin object checks dan memperbaiki runtime role 
 
 Langkah berikut: Lanjutkan PILOT-01 sesuai environment gate; development browser sudah dapat dipakai untuk uji manual tenant-scoped.
 
-Blocked PILOT-01: Staging menerima email aktivasi, tetapi smoke test menemukan portal tidak membaca token fragment (#token=...) yang dikirim backend. Perbaikan parser dan regression test lokal lulus; deployment portal hasil perbaikan dan aktivasi/MFA browser belum diverifikasi. Smoke tenant, restore backup, dan kompatibilitas image sebelumnya terhadap schema juga masih memerlukan evidence. — Push perbaikan parser token aktivasi, tunggu GitHub Actions deploy berhasil, lalu buka ulang tautan aktivasi yang masih berlaku dan verifikasi aktivasi/MFA. Lengkapi smoke tenant, tes restore backup serta kompatibilitas image sebelumnya terhadap schema; catat digest dan evidence aktual.
+Blocked PILOT-01: Staging health/readiness, aktivasi/login, restore dump terisolasi, dan startup/readiness API build sebelumnya sudah terverifikasi. Worker retention berfungsi tetapi image mewariskan healthcheck HTTP yang salah; perbaikan Compose lokal menunggu deploy. Penolakan header tenant tanpa sesi lulus, namun smoke lintas-organisasi dengan sesi aktif belum dijalankan; kompatibilitas portal sebelumnya juga belum diuji. — Push perubahan healthcheck Compose dan verifikasi worker retention setelah deploy. Uji akses negatif memakai session aktif terhadap objek organisasi lain serta uji portal image sebelumnya bila diperlukan; catat evidence, lalu tinjau acceptance PILOT-01 yang tersisa.
 
 Batas verifikasi:
 

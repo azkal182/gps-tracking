@@ -86,6 +86,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # The shared API image has an HTTP readiness check, but this worker runs
+    # retentionctl in a loop and does not listen on port 8080.
+    healthcheck:
+      disable: true
     networks: [private]
 
   portal:
