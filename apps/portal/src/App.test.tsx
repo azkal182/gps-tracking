@@ -85,6 +85,47 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('portal auth and organization context', () => {
+  it('reads activation tokens from email fragments and removes them from the address bar', async () => {
+    window.history.replaceState({}, '', '/activate#token=activation-test-token')
+    const fetchMock = vi.mocked(fetch)
+    fetchMock.mockImplementation(async (input) => {
+      const request = input instanceof Request ? input : new Request(input)
+      const url = request.url
+      if (url.includes('/auth/csrf'))
+        return json({ csrf_token: 'csrf-activation-token' })
+      if (url.includes('/auth/activate'))
+        return new Response(null, { status: 204 })
+      return json({})
+    })
+
+    render(<App />)
+    expect(
+      await screen.findByRole('heading', { name: 'Aktivasi akun' }),
+    ).toBeInTheDocument()
+    expect(window.location.hash).toBe('')
+
+    const user = userEvent.setup()
+    await user.type(
+      screen.getByLabelText('Password baru'),
+      'a long test password',
+    )
+    await user.click(screen.getByRole('button', { name: 'Lanjutkan' }))
+
+    expect(
+      await screen.findByText(
+        'Akun diaktifkan. Silakan masuk untuk melanjutkan.',
+      ),
+    ).toBeInTheDocument()
+    const activationRequest = fetchMock.mock.calls
+      .map(([input]) => input)
+      .find((input) => requestUrl(input).includes('/auth/activate'))
+    expect(activationRequest).toBeInstanceOf(Request)
+    expect(await (activationRequest as Request).clone().json()).toEqual({
+      token: 'activation-test-token',
+      new_password: 'a long test password',
+    })
+  })
+
   it('loads the authenticated portal and active organization from the API', async () => {
     render(<App />)
     expect(

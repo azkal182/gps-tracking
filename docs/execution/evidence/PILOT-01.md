@@ -53,3 +53,7 @@ SSH host key/key, dan Environment/secrets GitHub sesuai panduan. Setelah workflo
 jalankan smoke test synthetic dan uji image lama terhadap schema hasil migration;
 PILOT-01 tetap belum done sampai evidence itu tersedia. Jangan mengarahkan lokasi
 nyata ke staging sebelum backup/restore dan alerting dipastikan.
+
+## Temuan smoke aktivasi staging (2026-10-20)
+
+Pengguna menerima pesan aktivasi, tetapi halaman menampilkan `Token aktivasi tidak ditemukan` dan tidak mengirim request API. Backend sengaja meletakkan token pada URL fragment `#token=...`; portal hanya membaca query string sehingga token tidak terbaca. Parser portal kini membaca token query maupun fragment, lalu menghapus token dari address bar sebelum digunakan. Regression test memastikan token fragment dikirim hanya saat submit dan hash dibersihkan. Verifikasi lokal: Prettier, portal lint, typecheck, dan Vitest 8 file / 32 test lulus. Deployment perbaikan dan aktivasi browser staging masih menunggu.

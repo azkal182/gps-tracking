@@ -1,5 +1,9 @@
 # Worklog proyek
 
+## 2026-10-20 — Perbaikan token aktivasi portal untuk PILOT-01
+
+Smoke test staging menemukan tautan email menggunakan `#token=...`, tetapi halaman aktivasi hanya membaca query string; form karena itu tidak mengirim request aktivasi. Portal kini membaca token fragment/query sekali lalu membersihkan URL. Regression test membuktikan token fragment digunakan pada POST dan tidak tertinggal di address bar. Prettier, lint, typecheck, dan portal tests (32) lulus. Menunggu deploy perbaikan dan verifikasi browser staging; evidence tambahan di [PILOT-01](./evidence/PILOT-01.md).
+
 ## 2026-10-20 — PILOT-01 preflight staging disiapkan; smoke blocked
 
 Disiapkan multi-stage image Rust/portal+Caddy, Compose staging privat, SQLx one-shot migration, runtime DB roles terbatas, backup sebelum migrasi, worker retensi, rollback image tanpa rollback schema, dan panduan VPS/GitHub Actions. CI hanya mem-publish image dan deploy SHA saat push `main` lulus quality job. Rust format/check/clippy/tests, portal lint/typecheck/tests/build, dan shell syntax lulus. Portal image berhasil dibangun lokal; Compose dan Caddy lolos validasi. Dockerfile API lolos static check, tetapi image Rust penuh tidak dibangun karena ruang lokal tersisa sekitar 4 GiB; staging smoke belum dapat berjalan tanpa VPS/GitHub environment. Domain/VPS/SMTP/GitHub secrets juga belum dikonfigurasi; PILOT-01 blocked dan bukan klaim MVP live. Evidence: [PILOT-01](./evidence/PILOT-01.md).

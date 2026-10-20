@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
+import { Link, Navigate, useNavigate } from 'react-router'
 import { useForm, type UseFormRegister } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -373,10 +373,16 @@ export function ForgotPasswordPage() {
 }
 
 function useOneTimeToken() {
-  const [params] = useSearchParams()
   const [token] = useState(() => {
-    const value = params.get('token') ?? ''
-    if (value) window.history.replaceState({}, '', window.location.pathname)
+    const url = new URL(window.location.href)
+    const fragmentParams = new URLSearchParams(url.hash.slice(1))
+    const value =
+      url.searchParams.get('token') ?? fragmentParams.get('token') ?? ''
+    if (value) {
+      url.searchParams.delete('token')
+      url.hash = ''
+      window.history.replaceState({}, '', `${url.pathname}${url.search}`)
+    }
     return value
   })
   return token

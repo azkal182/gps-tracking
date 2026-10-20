@@ -1108,8 +1108,8 @@
       "owner": "Codex",
       "started_at": "2026-10-20",
       "completed_at": null,
-      "blocked_reason": "VPS dan GitHub staging environment/secrets telah disiapkan pengguna; SMTP staging belum dikonfigurasi. Deployment dan verifikasi remote belum dijalankan, sehingga health/tenant smoke, restore backup, kompatibilitas image sebelumnya terhadap schema, dan alur aktivasi email belum memiliki evidence. Image portal, konfigurasi Compose, dan Caddy lulus validasi lokal; build penuh image API akan dilakukan oleh GitHub CI karena ruang disk lokal terbatas.",
-      "unblock_action": "Commit dan push perubahan PILOT-01 ke main; pantau CI/build/deploy di GitHub Actions. Verifikasi health/readiness dan smoke test sintetis termasuk tenant authorization, uji restore backup serta kompatibilitas image sebelumnya terhadap schema; konfigurasi SMTP staging sebelum menguji aktivasi akun/email. Catat digest dan evidence aktual.",
+      "blocked_reason": "Staging menerima email aktivasi, tetapi smoke test menemukan portal tidak membaca token fragment (#token=...) yang dikirim backend. Perbaikan parser dan regression test lokal lulus; deployment portal hasil perbaikan dan aktivasi/MFA browser belum diverifikasi. Smoke tenant, restore backup, dan kompatibilitas image sebelumnya terhadap schema juga masih memerlukan evidence.",
+      "unblock_action": "Push perbaikan parser token aktivasi, tunggu GitHub Actions deploy berhasil, lalu buka ulang tautan aktivasi yang masih berlaku dan verifikasi aktivasi/MFA. Lengkapi smoke tenant, tes restore backup serta kompatibilitas image sebelumnya terhadap schema; catat digest dan evidence aktual.",
       "evidence": [
         "docs/execution/evidence/PILOT-01.md"
       ]
