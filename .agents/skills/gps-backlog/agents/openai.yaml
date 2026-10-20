@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPS Backlog"
+  short_description: "Resume tasks and record evidence toward GPS MVP"
+  default_prompt: "Use $gps-backlog for the relevant backend-tracker task and record evidence in the project backlog."

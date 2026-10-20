@@ -1,0 +1,1342 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-20",
+  "baseline": "docs/gps-tracking-baseline-final.md",
+  "phases": [
+    {
+      "id": "P00",
+      "title": "Planning dan workflow agent",
+      "order": 0
+    },
+    {
+      "id": "P01",
+      "title": "Foundation proyek",
+      "order": 1
+    },
+    {
+      "id": "P02",
+      "title": "Kontrak API dan WS",
+      "order": 2
+    },
+    {
+      "id": "P03",
+      "title": "Database dan isolasi tenant",
+      "order": 3
+    },
+    {
+      "id": "P04",
+      "title": "Authentication dan recovery",
+      "order": 4
+    },
+    {
+      "id": "P05",
+      "title": "Organisasi, grants dan onboarding",
+      "order": 5
+    },
+    {
+      "id": "P06",
+      "title": "Target/device dan kredensial",
+      "order": 6
+    },
+    {
+      "id": "P07",
+      "title": "Session dan ingestion",
+      "order": 7
+    },
+    {
+      "id": "P08",
+      "title": "Heartbeat, query dan realtime",
+      "order": 8
+    },
+    {
+      "id": "P09",
+      "title": "Portal management dan peta",
+      "order": 9
+    },
+    {
+      "id": "P10",
+      "title": "Hardening dan readiness",
+      "order": 10
+    },
+    {
+      "id": "P11",
+      "title": "Packaging dan pilot MVP",
+      "order": 11
+    },
+    {
+      "id": "POST",
+      "title": "Sesudah MVP",
+      "order": 12
+    }
+  ],
+  "handoff": {
+    "current_task": null,
+    "next_task": "PILOT-01",
+    "summary": "TENANT-01 menutup cross-tenant admin object checks dan memperbaiki runtime role dev. Portal browser kini menampilkan Histori tenant-scoped dan realtime Live tersambung.",
+    "next_action": "Lanjutkan PILOT-01 sesuai environment gate; development browser sudah dapat dipakai untuk uji manual tenant-scoped."
+  },
+  "tasks": [
+    {
+      "id": "PLAN-01",
+      "phase": "P00",
+      "title": "Finalisasi baseline planning",
+      "scope": "setup",
+      "status": "done",
+      "depends_on": [],
+      "skills": [
+        "gps-plan"
+      ],
+      "references": [
+        "docs/gps-tracking-baseline-final.md",
+        "docs/README.md"
+      ],
+      "acceptance": [
+        "Baseline v1.0, keputusan dan batas validasi tersedia; bukan klaim kode selesai.",
+        "Planning terhubung di indeks, JSON contoh dan link lokal diperiksa."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/PLAN-01.md"
+      ]
+    },
+    {
+      "id": "AGENT-01",
+      "phase": "P00",
+      "title": "AGENTS, skill lokal dan tracker progres",
+      "scope": "setup",
+      "status": "done",
+      "depends_on": [
+        "PLAN-01"
+      ],
+      "skills": [
+        "gps-plan",
+        "gps-backlog"
+      ],
+      "references": [
+        "docs/gps-tracking-implementation-plan.md"
+      ],
+      "acceptance": [
+        "AGENTS.md, delapan skill repo dan coverage semua planning tersedia; tidak ada instalasi global.",
+        "Tracker validate/render/status/next, validator skills dan negative tests tracker lulus.",
+        "Backlog memisahkan planning selesai dari implementasi yang belum dimulai."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/AGENT-01.md"
+      ]
+    },
+    {
+      "id": "FOUND-01",
+      "phase": "P01",
+      "title": "Scaffold workspace Rust dan health",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "AGENT-01"
+      ],
+      "skills": [
+        "gps-release"
+      ],
+      "references": [
+        "docs/gps-tracking-technical-decisions.md",
+        "docs/gps-tracking-app-spec.md"
+      ],
+      "acceptance": [
+        "Cargo workspace apps/server dan crates sesuai baseline; config typed dan secret redaction.",
+        "healthz/readyz, graceful shutdown, fmt/clippy/build/test tersedia dan lulus."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/FOUND-01.md"
+      ]
+    },
+    {
+      "id": "FOUND-02",
+      "phase": "P01",
+      "title": "Scaffold portal dan tooling frontend",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "FOUND-01"
+      ],
+      "skills": [
+        "gps-portal",
+        "gps-release"
+      ],
+      "references": [
+        "docs/gps-tracking-frontend-stack.md",
+        "docs/gps-tracking-technical-decisions.md"
+      ],
+      "acceptance": [
+        "React/Vite TS strict, Tailwind/shadcn, pnpm lockfile dan scripts lint/typecheck/test/build tersedia.",
+        "Shell dengan route/loading/error, dev API/WS proxy; belum mengklaim fitur auth selesai."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/FOUND-02.md"
+      ]
+    },
+    {
+      "id": "FOUND-03",
+      "phase": "P01",
+      "title": "Environment lokal dan CI dasar",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "FOUND-01",
+        "FOUND-02"
+      ],
+      "skills": [
+        "gps-release"
+      ],
+      "references": [
+        "docs/gps-tracking-database-operations.md",
+        "docs/gps-tracking-technical-decisions.md"
+      ],
+      "acceptance": [
+        "Compose disposable PG/PostGIS/Mailpit dan sample env tanpa secret; dokumentasi perintah.",
+        "CI build/lint/typecheck dan unit tests backend/frontend, dependency versions pinned."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/FOUND-03.md"
+      ]
+    },
+    {
+      "id": "CONTRACT-01",
+      "phase": "P02",
+      "title": "OpenAPI tracking lengkap",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "FOUND-03"
+      ],
+      "skills": [
+        "gps-contracts"
+      ],
+      "references": [
+        "docs/gps-tracking-api-contract.md"
+      ],
+      "acceptance": [
+        "Semua route tracking/heartbeat, fields tenant/status dan errors tercakup OpenAPI 3.1.",
+        "Contoh valid terhadap schema; idempotency/header auth/limit/pagination eksplisit."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/CONTRACT-01.md"
+      ]
+    },
+    {
+      "id": "CONTRACT-02",
+      "phase": "P02",
+      "title": "OpenAPI management dan schema WS",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "CONTRACT-01"
+      ],
+      "skills": [
+        "gps-contracts",
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-management-api.md",
+        "docs/gps-tracking-api-contract.md"
+      ],
+      "acceptance": [
+        "Auth/MFA/challenges, invite/platform/grants/token/audit routes tercakup.",
+        "Schema event/subscription/ticket WS eksplisit termasuk observed_at dan access rules."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/CONTRACT-02.md"
+      ]
+    },
+    {
+      "id": "CONTRACT-03",
+      "phase": "P02",
+      "title": "Generate client dan CI contract checks",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "CONTRACT-02"
+      ],
+      "skills": [
+        "gps-contracts",
+        "gps-portal"
+      ],
+      "references": [
+        "docs/gps-tracking-frontend-stack.md",
+        "docs/gps-tracking-implementation-plan.md"
+      ],
+      "acceptance": [
+        "TS types/openapi-fetch client dihasilkan dari kontrak dan dapat dipakai portal.",
+        "CI validation/example/generated diff check mencegah drift; tidak hand-edit generated output."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/CONTRACT-03.md"
+      ]
+    },
+    {
+      "id": "DB-01",
+      "phase": "P03",
+      "title": "Migrasi identity, tenant dan auth",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "CONTRACT-02"
+      ],
+      "skills": [
+        "gps-storage",
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-database-operations.md",
+        "docs/gps-tracking-management-api.md"
+      ],
+      "acceptance": [
+        "Tables identity/membership/auth/factors/token/outbox dan constraint uniqueness diterapkan.",
+        "Migration fresh/upgrade, atomic token/code consumption dan missing tenant tests lulus."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/DB-01.md"
+      ]
+    },
+    {
+      "id": "DB-02",
+      "phase": "P03",
+      "title": "Migrasi domain, positions dan locking",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "DB-01"
+      ],
+      "skills": [
+        "gps-storage"
+      ],
+      "references": [
+        "docs/gps-tracking-database-operations.md",
+        "docs/gps-tracking-app-spec.md"
+      ],
+      "acceptance": [
+        "Targets/devices/session/positions/credentials/idempotency/audit termasuk tenant composite FKs dan indexes.",
+        "Active-session uniqueness/exclusion, canonical-year expiry dan lock order diuji concurrency."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/DB-02.md"
+      ]
+    },
+    {
+      "id": "DB-03",
+      "phase": "P03",
+      "title": "RLS dan repositories tenant-scoped",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "DB-02"
+      ],
+      "skills": [
+        "gps-storage",
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-database-operations.md"
+      ],
+      "acceptance": [
+        "Non-owner FORCE RLS, SET LOCAL context, token lookup sempit dan worker role diterapkan.",
+        "Cross-tenant FK/read/write, missing context, pool reuse, owner bypass tests lulus pada PostgreSQL."
+      ],
+      "owner": "codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/DB-03.md"
+      ]
+    },
+    {
+      "id": "AUTH-01",
+      "phase": "P04",
+      "title": "Password login, cookie sesi dan CSRF",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "DB-03",
+        "CONTRACT-03"
+      ],
+      "skills": [
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-management-api.md",
+        "docs/gps-tracking-technical-decisions.md"
+      ],
+      "acceptance": [
+        "Argon2id, strict limited challenges, cookie flags, idle/absolute expiry dan CSRF/Origin diterapkan.",
+        "Wrong password/principal, login CSRF, timeout/logout/session revoke dan no secret logging diuji."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-20",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/AUTH-01.md"
+      ]
+    },
+    {
+      "id": "AUTH-02",
+      "phase": "P04",
+      "title": "TOTP enrollment dan recovery",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "AUTH-01"
+      ],
+      "skills": [
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-management-api.md",
+        "docs/gps-tracking-technical-decisions.md"
+      ],
+      "acceptance": [
+        "TOTP encrypted secret, replay-step guard, mandatory MFA dan pending_mfa flow diterapkan.",
+        "Concurrent code replay/recovery, password-only bypass, recent auth dan recovery re-enrollment tests lulus."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/AUTH-02.md"
+      ]
+    },
+    {
+      "id": "AUTH-03",
+      "phase": "P04",
+      "title": "Email reset/aktivasi dan bootstrap CLI",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "AUTH-02"
+      ],
+      "skills": [
+        "gps-auth",
+        "gps-release"
+      ],
+      "references": [
+        "docs/gps-tracking-management-api.md",
+        "docs/gps-tracking-technical-decisions.md"
+      ],
+      "acceptance": [
+        "SMTP outbox/Mailpit, expiring one-use links, reset preserving MFA dan CLI bootstrap/operator recovery.",
+        "Link scanner/replay/expiry, matching existing account, secret redaction dan failed-email recovery diuji."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/AUTH-03.md"
+      ]
+    },
+    {
+      "id": "ORG-01",
+      "phase": "P05",
+      "title": "Organisasi dan invitation lifecycle",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "AUTH-03"
+      ],
+      "skills": [
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-management-api.md"
+      ],
+      "acceptance": [
+        "Platform create/suspend/reactivate, invite accept/resend/revoke dan metadata endpoints selesai.",
+        "Platform tidak mendapat koordinat; org suspend memblokir request, pending admin enrollment dan invite mismatch diuji."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/ORG-01.md"
+      ]
+    },
+    {
+      "id": "ORG-02",
+      "phase": "P05",
+      "title": "Membership, grant dan peran",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "ORG-01"
+      ],
+      "skills": [
+        "gps-auth",
+        "gps-storage"
+      ],
+      "references": [
+        "docs/gps-tracking-management-api.md",
+        "docs/gps-tracking-portal-spec.md",
+        "docs/gps-tracking-technical-decisions.md"
+      ],
+      "acceptance": [
+        "Role/grant checks, creator grants, last-admin lock dan request tenant per tab implemented.",
+        "Cross-tenant grant, viewer write, concurrent last-admin, perubahan grant dan integration-owner checks diuji.",
+        "Boolean MFA policy lookup recognizes active operator credentials:write grants without exposing tracking data; grant activation, revocation/downgrade, cross-tenant isolation and login policy are tested."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/ORG-02.md"
+      ]
+    },
+    {
+      "id": "ORG-03",
+      "phase": "P05",
+      "title": "Portal login/onboarding dan organisasi",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "ORG-02",
+        "FOUND-02"
+      ],
+      "skills": [
+        "gps-portal",
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-portal-spec.md",
+        "docs/gps-tracking-frontend-stack.md"
+      ],
+      "acceptance": [
+        "Login/MFA/recovery, sessions list/revoke, undangan, anggota dan organisasi aktif terintegrasi API.",
+        "Auth-portal acceptance dan tenant switch multi-tab/late response tests lulus tanpa token persistence."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/ORG-03.md"
+      ]
+    },
+    {
+      "id": "DEVICE-01",
+      "phase": "P06",
+      "title": "CRUD terbatas target/device",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "ORG-02"
+      ],
+      "skills": [
+        "gps-tracking",
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-api-contract.md",
+        "docs/gps-tracking-management-api.md"
+      ],
+      "acceptance": [
+        "Create/list/detail/PATCH sesuai schema, unique external_ref/identifier, grants creator dan filters.",
+        "No cross-tenant/read without grant, validation metadata/name, conflict/errors teruji."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/DEVICE-01.md"
+      ]
+    },
+    {
+      "id": "DEVICE-02",
+      "phase": "P06",
+      "title": "Provisioning, rotasi dan disable device",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "DEVICE-01"
+      ],
+      "skills": [
+        "gps-auth",
+        "gps-storage"
+      ],
+      "references": [
+        "docs/gps-tracking-management-api.md",
+        "docs/gps-tracking-database-operations.md"
+      ],
+      "acceptance": [
+        "Secret sekali, one-active-token, recent MFA credential permission dan lifecycle enable/re-enable.",
+        "Rotation/disable concurrent ingestion serialization, old token reject, viewer/operator permission tests lulus."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/DEVICE-02.md"
+      ]
+    },
+    {
+      "id": "REFAC-01",
+      "phase": "P06",
+      "title": "Struktur modul server dan pemisahan test",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "DEVICE-02"
+      ],
+      "skills": [
+        "gps-plan",
+        "gps-backlog"
+      ],
+      "references": [
+        "docs/execution/STRUCTURE.md",
+        "docs/gps-tracking-implementation-plan.md"
+      ],
+      "acceptance": [
+        "Konvensi struktur folder source, domain dan test didokumentasikan sebagai panduan refactor bertahap.",
+        "Handler target/device dan test server dipisah dari lib.rs tanpa mengubah route atau perilaku API.",
+        "Workspace Rust diformat, lulus clippy dan seluruh test yang dapat dijalankan; bukti mencatat test yang memerlukan PostgreSQL bila tidak tersedia."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/REFAC-01.md"
+      ]
+    },
+    {
+      "id": "DEVICE-03",
+      "phase": "P06",
+      "title": "Application tokens dan audit query",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "DEVICE-02"
+      ],
+      "skills": [
+        "gps-auth",
+        "gps-contracts"
+      ],
+      "references": [
+        "docs/gps-tracking-management-api.md",
+        "docs/gps-tracking-database-operations.md"
+      ],
+      "acceptance": [
+        "Tenant/owner-scoped limited integration tokens, expiry/revoke dan admin metadata/audit endpoints.",
+        "Tidak bisa menerbitkan credential/manage accounts, owner permission recheck, audit redaction diuji."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/DEVICE-03.md"
+      ]
+    },
+    {
+      "id": "TRACK-01",
+      "phase": "P07",
+      "title": "Tracking session lifecycle",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "DEVICE-03"
+      ],
+      "skills": [
+        "gps-tracking",
+        "gps-storage"
+      ],
+      "references": [
+        "docs/gps-tracking-api-contract.md",
+        "docs/gps-tracking-app-spec.md"
+      ],
+      "acceptance": [
+        "Create/list/detail/end, wajib Idempotency-Key dan auth replay, server clocks setelah lock.",
+        "AC-01/02/10/12, overlaps, concurrent end dan boundaries termasuk zero-duration lulus."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/TRACK-01.md"
+      ]
+    },
+    {
+      "id": "TRACK-02",
+      "phase": "P07",
+      "title": "HTTP ingestion dan canonical validation",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "TRACK-01"
+      ],
+      "skills": [
+        "gps-tracking",
+        "gps-storage"
+      ],
+      "references": [
+        "docs/gps-tracking-api-contract.md",
+        "docs/gps-tracking-app-spec.md"
+      ],
+      "acceptance": [
+        "Batch/schema/measurements/message hash, session_only/always, late/future retry serta transaction atomicity.",
+        "AC-03/04/05/06/08, DB failure no stored, duplicate/conflict races dan wrong-device token lulus."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/TRACK-02.md"
+      ]
+    },
+    {
+      "id": "TRACK-03",
+      "phase": "P07",
+      "title": "Latest/history repositories dan expiry",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "TRACK-02"
+      ],
+      "skills": [
+        "gps-tracking",
+        "gps-storage"
+      ],
+      "references": [
+        "docs/gps-tracking-api-contract.md",
+        "docs/gps-tracking-database-operations.md"
+      ],
+      "acceptance": [
+        "Temporal history, deterministic sort/cursor, latest target/device terpisah dan expiry filter.",
+        "AC-07, out-of-order/tie IDs, previous-session visibility, cursor tenant/filter mismatch dan calendar expiry lulus."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/TRACK-03.md"
+      ]
+    },
+    {
+      "id": "LIVE-01",
+      "phase": "P08",
+      "title": "Heartbeat dan status terpisah",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "TRACK-03"
+      ],
+      "skills": [
+        "gps-tracking"
+      ],
+      "references": [
+        "docs/gps-tracking-api-contract.md",
+        "docs/gps-tracking-app-spec.md"
+      ],
+      "acceptance": [
+        "Heartbeat tanpa koordinat/sesi, monotonic contact, 60/180 dan freshness terpisah.",
+        "AC-13/14, idle/stale-online/no_position/unknown, rejected batch contact dan disabled device tests."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/LIVE-01.md"
+      ]
+    },
+    {
+      "id": "LIVE-02",
+      "phase": "P08",
+      "title": "WS ticket, subscriptions dan timeout",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "LIVE-01",
+        "ORG-03"
+      ],
+      "skills": [
+        "gps-tracking",
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-api-contract.md",
+        "docs/gps-tracking-database-operations.md"
+      ],
+      "acceptance": [
+        "Single-use ticket session/tenant binding, Origin, subscriptions replace atomik, queue bound dan worker timeout.",
+        "Cross-tenant/unauthorized ID, revocation open WS, expired auth, reconnect/restart serta slow consumer diuji."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/LIVE-02.md"
+      ]
+    },
+    {
+      "id": "LIVE-03",
+      "phase": "P08",
+      "title": "Rekonsiliasi event dan snapshot",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "LIVE-02"
+      ],
+      "skills": [
+        "gps-tracking",
+        "gps-contracts"
+      ],
+      "references": [
+        "docs/gps-tracking-api-contract.md",
+        "docs/gps-tracking-app-spec.md"
+      ],
+      "acceptance": [
+        "Post-commit events, target projection dan observed_at/position ordering sesuai schema.",
+        "AC-09/11, duplicate no event, snapshot race, target reassignment dan backfill event tests lulus."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/LIVE-03.md"
+      ]
+    },
+    {
+      "id": "PORTAL-01",
+      "phase": "P09",
+      "title": "Halaman target/device/token/session",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "LIVE-03",
+        "ORG-03"
+      ],
+      "skills": [
+        "gps-portal"
+      ],
+      "references": [
+        "docs/gps-tracking-portal-spec.md",
+        "docs/gps-tracking-management-api.md"
+      ],
+      "acceptance": [
+        "Management UI menggunakan effective grants pengguna untuk kontrol create/write/credential/session per organisasi dan objek; token sekali tampil, active-session requirements dan lifecycle controls tetap diikuti.",
+        "Bagian provisioning/session AC-PORT-01/02/03/04/09, error/conflict/empty states dan API-direct negative permission tested. Verifikasi map dan histori end-to-end AC-PORT-01/09 didelegasikan ke PORTAL-02/03."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-19",
+      "completed_at": "2026-10-19",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/PORTAL-01.md"
+      ]
+    },
+    {
+      "id": "PORTAL-02",
+      "phase": "P09",
+      "title": "Peta live dan status kontak",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "PORTAL-01"
+      ],
+      "skills": [
+        "gps-portal"
+      ],
+      "references": [
+        "docs/gps-tracking-portal-spec.md",
+        "docs/gps-tracking-technical-decisions.md"
+      ],
+      "acceptance": [
+        "MapLibre/MapTiler integration konfigurabel, attribution, current-session map dan separate status.",
+        "AC-PORT-01 live-position journey dan AC-PORT-05/07, provider failure fallback, tenant switch and stale marker behavior E2E diuji."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-20",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/PORTAL-02.md"
+      ]
+    },
+    {
+      "id": "PORTAL-03",
+      "phase": "P09",
+      "title": "Histori, filter dan audit portal",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "PORTAL-02"
+      ],
+      "skills": [
+        "gps-portal"
+      ],
+      "references": [
+        "docs/gps-tracking-portal-spec.md",
+        "docs/gps-tracking-frontend-stack.md"
+      ],
+      "acceptance": [
+        "History device/session, timezone, cursor tables, cap map 10000 partial label dan audit admin.",
+        "AC-PORT-01 history journey dan AC-PORT-06/08/09, date boundaries/pagination/partial data, retained authorized history after device disable, no persisted coordinates diuji."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-20",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/PORTAL-03.md"
+      ]
+    },
+    {
+      "id": "OPS-01",
+      "phase": "P10",
+      "title": "Purge retensi, audit dan logs",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "PORTAL-03"
+      ],
+      "skills": [
+        "gps-storage",
+        "gps-release"
+      ],
+      "references": [
+        "docs/gps-tracking-database-operations.md"
+      ],
+      "acceptance": [
+        "Purge bounded/expiry reads, 365d audit/14d logs, outbox cleanup dan tombstone procedure.",
+        "Calendar/leap-year expiry, retry retention, purge failure alarm dan data deletion fixtures teruji."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-20",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/OPS-01.md"
+      ]
+    },
+    {
+      "id": "OPS-02",
+      "phase": "P10",
+      "title": "Security limits dan observability",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "OPS-01"
+      ],
+      "skills": [
+        "gps-release",
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-database-operations.md"
+      ],
+      "acceptance": [
+        "Per-route rates, auth brute-force, CSP/headers, bounded WS/pool/query timeouts dan metrics.",
+        "No sensitive logs/labels, CSRF/replay and policy regression, CI dependency checks terverifikasi."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-20",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/OPS-02.md"
+      ]
+    },
+    {
+      "id": "OPS-03",
+      "phase": "P10",
+      "title": "Backup/restore dan rollback drill",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "OPS-02"
+      ],
+      "skills": [
+        "gps-release"
+      ],
+      "references": [
+        "docs/gps-tracking-database-operations.md"
+      ],
+      "acceptance": [
+        "pgBackRest full/incremental/WAL, encryption/keys runbook dan isolated restore.",
+        "Measured RPO/RTO, tombstone/expiry purge, dan invalidasi auth tersedia; runbook menetapkan syarat kompatibilitas rollback."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-20",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/OPS-03.md"
+      ]
+    },
+    {
+      "id": "OPS-04",
+      "phase": "P10",
+      "title": "Load dan E2E release readiness",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "OPS-03"
+      ],
+      "skills": [
+        "gps-release"
+      ],
+      "references": [
+        "docs/gps-tracking-implementation-plan.md",
+        "docs/gps-tracking-database-operations.md"
+      ],
+      "acceptance": [
+        "Synthetic 100-device steady/burst/heartbeat/backfill, documented environment/seed/timings/storage forecast.",
+        "Semua AC P0, auth/tenant/concurrency/portal tests lulus; audit evidence bukan hanya checklist."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-20",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/OPS-04.md"
+      ]
+    },
+    {
+      "id": "PILOT-01",
+      "phase": "P11",
+      "title": "Image dan deployment preflight",
+      "scope": "mvp",
+      "status": "todo",
+      "depends_on": [
+        "OPS-04"
+      ],
+      "skills": [
+        "gps-release"
+      ],
+      "references": [
+        "docs/gps-tracking-technical-decisions.md",
+        "docs/gps-tracking-database-operations.md",
+        "docs/execution/DECISIONS.md"
+      ],
+      "acceptance": [
+        "Multi-stage image static/Rust, Caddy TLS routing, non-root, readiness/migration preflight dan rollback guide.",
+        "Local/staging smoke passes; daftar domain/SMTP/map/backup/host prerequisites terverifikasi tanpa secret evidence.",
+        "Sebelum pilot, uji image/build aplikasi sebelumnya terhadap schema hasil migration di staging: startup/readiness dan negative tenant-authorization smoke lulus; simpan digest kedua build dan hasilnya. Jika build sebelumnya belum pernah production, gunakan kandidat dari code state berurutan. Uji gagal/tidak tersedia berarti pilot tetap tertahan."
+      ],
+      "owner": null,
+      "started_at": null,
+      "completed_at": null,
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": []
+    },
+    {
+      "id": "PILOT-02",
+      "phase": "P11",
+      "title": "Pilot deployment terotorisasi",
+      "scope": "mvp",
+      "status": "todo",
+      "depends_on": [
+        "PILOT-01"
+      ],
+      "skills": [
+        "gps-release"
+      ],
+      "references": [
+        "docs/gps-tracking-implementation-plan.md",
+        "docs/gps-tracking-database-operations.md"
+      ],
+      "acceptance": [
+        "Otorisasi deployment dan environment tersedia; real migration/health, tenant isolation dan provider connectivity smoke.",
+        "Backup/WAL monitoring aktif, production-safe rollback path dan deployment evidence; jangan mark done dari local mock."
+      ],
+      "owner": null,
+      "started_at": null,
+      "completed_at": null,
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": []
+    },
+    {
+      "id": "PILOT-03",
+      "phase": "P11",
+      "title": "Acceptance MVP dan handover",
+      "scope": "mvp",
+      "status": "todo",
+      "depends_on": [
+        "PILOT-02"
+      ],
+      "skills": [
+        "gps-release",
+        "gps-backlog"
+      ],
+      "references": [
+        "docs/gps-tracking-implementation-plan.md",
+        "docs/gps-tracking-baseline-final.md"
+      ],
+      "acceptance": [
+        "Review semua required task/evidence dan pilot behavior, residual issue list tidak menyembunyikan P0.",
+        "Runbook/handover lengkap, STATUS menyatakan MVP hanya setelah semua required tasks done."
+      ],
+      "owner": null,
+      "started_at": null,
+      "completed_at": null,
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": []
+    },
+    {
+      "id": "POST-01",
+      "phase": "POST",
+      "title": "MQTT adapter",
+      "scope": "post_mvp",
+      "status": "deferred",
+      "depends_on": [],
+      "skills": [
+        "gps-tracking"
+      ],
+      "references": [
+        "docs/gps-tracking-api-contract.md"
+      ],
+      "acceptance": [
+        "Dirancang/dikerjakan hanya pada scope lanjutan yang diotorisasi."
+      ],
+      "owner": null,
+      "started_at": null,
+      "completed_at": null,
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": []
+    },
+    {
+      "id": "POST-02",
+      "phase": "POST",
+      "title": "Hardware binary adapters",
+      "scope": "post_mvp",
+      "status": "deferred",
+      "depends_on": [],
+      "skills": [
+        "gps-tracking"
+      ],
+      "references": [
+        "docs/gps-tracking-app-spec.md"
+      ],
+      "acceptance": [
+        "Pilih model/firmware/fixtures sebelum klaim dukungan."
+      ],
+      "owner": null,
+      "started_at": null,
+      "completed_at": null,
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": []
+    },
+    {
+      "id": "POST-03",
+      "phase": "POST",
+      "title": "Scale/WebAuthn/analytics",
+      "scope": "post_mvp",
+      "status": "deferred",
+      "depends_on": [],
+      "skills": [
+        "gps-plan"
+      ],
+      "references": [
+        "docs/gps-tracking-technical-decisions.md"
+      ],
+      "acceptance": [
+        "Perubahan scope melalui revisi desain; tidak termasuk acceptance MVP."
+      ],
+      "owner": null,
+      "started_at": null,
+      "completed_at": null,
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": []
+    },
+    {
+      "id": "RET-01",
+      "phase": "P10",
+      "title": "Konfigurasi retensi posisi deployment",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "OPS-01"
+      ],
+      "skills": [
+        "gps-storage",
+        "gps-release",
+        "gps-backlog"
+      ],
+      "references": [
+        "docs/gps-tracking-database-operations.md",
+        "docs/gps-tracking-app-spec.md",
+        "docs/execution/DECISIONS.md"
+      ],
+      "acceptance": [
+        "POSITION_RETENTION_DAYS tervalidasi 1\u201336500, default 365, dan digunakan ingestion serta retention worker.",
+        "Expiry baru memakai konfigurasi; penurunan konfigurasi membuat worker purge row lama tanpa membuka akses payload lintas tenant.",
+        "Fresh/upgrade migration, default kalender, nilai 60 hari, purge/RLS dan regression tests lulus; dokumentasi .env dan operasi menjelaskan rollout."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-20",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/RET-01.md"
+      ]
+    },
+    {
+      "id": "DEVSEED-01",
+      "phase": "P01",
+      "title": "Seed sintetis lokal untuk uji portal browser",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "FOUND-03"
+      ],
+      "skills": [
+        "gps-auth",
+        "gps-backlog"
+      ],
+      "references": [
+        "docs/execution/development-environment.md",
+        "docs/gps-tracking-portal-spec.md"
+      ],
+      "acceptance": [
+        "Seed hanya menerima localhost *_dev/*_test, memakai password tersembunyi/env dan Argon2id, menerapkan migration serta idempotent.",
+        "Akun admin lokal MFA-normal dan dua organisasi dengan target/device/session/position sintetis dapat dipakai di portal.",
+        "Disposable PostGIS memverifikasi migration, row counts dan rerun no-op; panduan browser tersedia."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-20",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/DEVSEED-01.md"
+      ]
+    },
+    {
+      "id": "TENANT-01",
+      "phase": "P10",
+      "title": "Tutup akses admin lintas-tenant pada resource dan realtime",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "DB-03",
+        "ORG-03",
+        "LIVE-03",
+        "PORTAL-03"
+      ],
+      "skills": [
+        "gps-storage",
+        "gps-auth",
+        "gps-tracking",
+        "gps-portal",
+        "gps-backlog"
+      ],
+      "references": [
+        "docs/gps-tracking-database-operations.md",
+        "docs/gps-tracking-management-api.md",
+        "docs/gps-tracking-api-contract.md",
+        "docs/execution/development-environment.md"
+      ],
+      "acceptance": [
+        "Admin hanya mendapat izin untuk resource yang benar-benar dimiliki tenant yang dipilih; resource id tenant lain ditolak oleh REST dan WebSocket.",
+        "Daftar target/device tetap terikat tenant meskipun koneksi database memiliki BYPASSRLS; konfigurasi development memakai login runtime least-privilege, bukan user superuser.",
+        "Regression tests membuktikan daftar, location endpoint dan subscription tidak melintasi tenant; portal Histori dan Live berfungsi pada seed dua organisasi."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-20",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/TENANT-01.md"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+extends:
+  - minimal
+rules:
+  no-invalid-media-type-examples: error
+  no-invalid-parameter-examples: error
+  no-invalid-schema-examples: error
+  # A WebSocket RFC 6455 handshake succeeds with 101, not an HTTP 2xx response.
+  operation-2xx-response: off
+  # WebSocket message schemas are referenced from x-websocket-* extensions,
+  # which OpenAPI linters do not treat as standard $ref usage.
+  no-unused-components: off

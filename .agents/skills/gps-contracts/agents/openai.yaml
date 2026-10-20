@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPS Contracts"
+  short_description: "Implement GPS REST and WebSocket contracts"
+  default_prompt: "Use $gps-contracts for the relevant backend-tracker task and record evidence in the project backlog."

@@ -1,0 +1,31 @@
+{
+  "name": "backend-tracker",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=22.12.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "pnpm --filter @backend-tracker/portal build",
+    "lint": "pnpm --filter @backend-tracker/portal lint && pnpm exec prettier --check 'apps/portal/**/*.{ts,tsx,css,json,html}' '*.json' '*.yaml' '*.js'",
+    "typecheck": "pnpm --filter @backend-tracker/portal typecheck",
+    "test": "pnpm --filter @backend-tracker/portal test",
+    "contracts:lint": "redocly lint --config redocly.yaml contracts/openapi.yaml",
+    "contracts:generate": "openapi-typescript contracts/openapi.yaml -o apps/portal/src/api/generated.ts && prettier --write apps/portal/src/api/generated.ts",
+    "contracts:check": "pnpm contracts:lint && pnpm contracts:generate && git diff --exit-code -- apps/portal/src/api/generated.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@redocly/cli": "2.45.0",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "openapi-typescript": "7.13.0",
+    "prettier": "^3.7.4",
+    "prettier-plugin-tailwindcss": "^0.7.1",
+    "typescript-eslint": "^8.71.2"
+  }
+}

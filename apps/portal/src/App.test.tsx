@@ -1,0 +1,339 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
+import { App } from './App'
+import { PortalErrorBoundary } from './components/portal-error-boundary'
+import { RouteLoading } from './components/route-loading'
+import {
+  createTabOrganizationStore,
+  portalApi,
+  storeOrganizationId,
+} from './api/client'
+import { useOrganizationQuery } from './portal-context'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+
+const tenantA = 'tenant-a'
+const tenantB = 'tenant-b'
+const org = {
+  id: tenantA,
+  tenant_id: tenantA,
+  name: 'North Operations',
+  status: 'active',
+  created_at: '2026-10-19T00:00:00Z',
+  updated_at: '2026-10-19T00:00:00Z',
+}
+const me = {
+  user: {
+    id: 'user-1',
+    email: 'admin@example.invalid',
+    display_name: 'Admin User',
+    status: 'active',
+    created_at: '2026-10-19T00:00:00Z',
+    updated_at: '2026-10-19T00:00:00Z',
+  },
+  mfa_required: true,
+  mfa_enabled: true,
+  memberships: [
+    {
+      id: 'membership-1',
+      tenant_id: tenantA,
+      user_id: 'user-1',
+      role: 'admin',
+      status: 'active',
+      created_at: '2026-10-19T00:00:00Z',
+      updated_at: '2026-10-19T00:00:00Z',
+    },
+  ],
+}
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+
+function requestUrl(input: RequestInfo | URL) {
+  return input instanceof Request ? input.url : String(input)
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((r) => {
+    resolve = r
+  })
+  return { promise, resolve }
+}
+
+beforeEach(() => {
+  window.sessionStorage.clear()
+  window.localStorage.clear()
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = requestUrl(input)
+      if (url.includes('/auth/me')) return json(me)
+      if (url.includes('/organizations'))
+        return json({ data: [org], next_cursor: null })
+      if (url.includes('/organization')) return json(org)
+      return json({}, 200)
+    }),
+  )
+})
+
+afterEach(() => vi.unstubAllGlobals())
+
+describe('portal auth and organization context', () => {
+  it('loads the authenticated portal and active organization from the API', async () => {
+    render(<App />)
+    expect(
+      await screen.findByRole('heading', { name: 'Ringkasan' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('navigation', { name: 'Navigasi utama' }),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByTestId('active-organization-name'),
+    ).toHaveTextContent('North Operations')
+  })
+
+  it('routes to MFA challenge and does not persist login secrets', async () => {
+    const fetchMock = vi.mocked(fetch)
+    fetchMock.mockImplementation(async (input) => {
+      const url = requestUrl(input)
+      if (url.includes('/auth/me'))
+        return json(
+          {
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'Sign in',
+              request_id: 'test',
+            },
+          },
+          401,
+        )
+      if (url.includes('/auth/csrf'))
+        return json({ csrf_token: 'csrf-test-token-ephemeral' })
+      if (url.includes('/auth/login'))
+        return json({
+          state: 'mfa_required',
+          challenge_expires_at: '2026-10-19T00:05:00Z',
+        })
+      return json({}, 200)
+    })
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(
+      await screen.findByLabelText('Email'),
+      'admin@example.invalid',
+    )
+    await user.type(
+      screen.getByLabelText('Password'),
+      'a synthetic long password',
+    )
+    await user.click(screen.getByRole('button', { name: 'Lanjutkan' }))
+    expect(
+      await screen.findByRole('heading', { name: 'Verifikasi MFA' }),
+    ).toBeInTheDocument()
+    expect(window.localStorage.length).toBe(0)
+    expect(
+      [...Array(window.sessionStorage.length)].map((_, i) =>
+        window.sessionStorage.key(i),
+      ),
+    ).not.toContain('gps.auth-token')
+    const loginRequest = fetchMock.mock.calls
+      .map(([input]) => input)
+      .find((input) => requestUrl(input).includes('/auth/login'))
+    expect(loginRequest).toBeInstanceOf(Request)
+    expect((loginRequest as Request).credentials).toBe('include')
+    expect((loginRequest as Request).headers.get('X-CSRF-Token')).toBe(
+      'csrf-test-token-ephemeral',
+    )
+  })
+
+  it('requires recent password and MFA before creating an organization invitation', async () => {
+    const fetchMock = vi.mocked(fetch)
+    const invitation = {
+      id: 'invite-1',
+      tenant_id: tenantA,
+      email: 'new.operator@example.invalid',
+      role: 'operator',
+      status: 'pending',
+      expires_at: '2026-10-22T00:00:00Z',
+      created_at: '2026-10-19T00:00:00Z',
+    }
+    fetchMock.mockImplementation(async (input) => {
+      const request = input instanceof Request ? input : new Request(input)
+      const url = request.url
+      if (url.includes('/auth/me')) return json(me)
+      if (url.includes('/auth/csrf'))
+        return json({ csrf_token: 'csrf-recent-test-token' })
+      if (url.includes('/organizations'))
+        return json({ data: [org], next_cursor: null })
+      if (url.endsWith('/organization')) return json(org)
+      if (url.includes('/organization/members'))
+        return json({ data: [], next_cursor: null })
+      if (
+        url.includes('/organization/invitations') &&
+        request.method === 'POST'
+      )
+        return json(invitation, 201)
+      if (url.includes('/organization/invitations'))
+        return json({ data: [], next_cursor: null })
+      if (url.includes('/auth/reauthenticate'))
+        return new Response(null, { status: 204 })
+      return json({}, 200)
+    })
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(await screen.findByRole('link', { name: /Organisasi/ }))
+    await user.type(
+      await screen.findByLabelText('Email anggota'),
+      invitation.email,
+    )
+    await user.selectOptions(
+      screen.getByLabelText('Peran undangan'),
+      'operator',
+    )
+    await user.click(screen.getByRole('button', { name: 'Kirim undangan' }))
+    expect(
+      await screen.findByRole('form', {
+        name: 'Konfirmasi autentikasi terbaru',
+      }),
+    ).toBeInTheDocument()
+    const inviteBeforeReauth = fetchMock.mock.calls.some(([input]) => {
+      const request = input instanceof Request ? input : new Request(input)
+      return (
+        request.url.includes('/organization/invitations') &&
+        request.method === 'POST'
+      )
+    })
+    expect(inviteBeforeReauth).toBe(false)
+    await user.type(
+      screen.getByLabelText('Password saat ini'),
+      'a synthetic long password',
+    )
+    await user.type(screen.getByLabelText('Kode MFA jika diminta'), '123456')
+    await user.click(screen.getByRole('button', { name: 'Konfirmasi' }))
+    expect(await screen.findByText(/Undangan dibuat/)).toBeInTheDocument()
+    const requestOrder = fetchMock.mock.calls.map(([input]) => {
+      const request = input instanceof Request ? input : new Request(input)
+      return `${request.method} ${request.url}`
+    })
+    expect(
+      requestOrder.findIndex((item) => item.includes('/auth/reauthenticate')),
+    ).toBeLessThan(
+      requestOrder.findIndex(
+        (item) =>
+          item.includes('/organization/invitations') && item.startsWith('POST'),
+      ),
+    )
+  })
+
+  it('renders a not-found state without exposing protected workspace navigation', async () => {
+    window.history.replaceState({}, '', '/unknown-route')
+    render(<App />)
+    expect(
+      await screen.findByRole('heading', { name: '404 — Page not found' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('navigation', { name: 'Navigasi utama' }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('tenant isolation utilities', () => {
+  it('keeps organization selection separate for each tab-scoped store', () => {
+    const makeStorage = () => {
+      const values = new Map<string, string>()
+      return {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => values.set(key, value),
+        removeItem: (key: string) => values.delete(key),
+      }
+    }
+    const firstTab = createTabOrganizationStore(makeStorage())
+    const secondTab = createTabOrganizationStore(makeStorage())
+    firstTab.set(tenantA)
+    secondTab.set(tenantB)
+    expect(firstTab.get()).toBe(tenantA)
+    expect(secondTab.get()).toBe(tenantB)
+  })
+
+  it('preserves the tenant captured by an in-flight request after the tab switches', async () => {
+    storeOrganizationId(tenantB)
+    await portalApi.GET('/organization', {
+      params: { header: { 'X-Organization-Id': tenantA } },
+    })
+    const request = vi
+      .mocked(fetch)
+      .mock.calls.map(([input]) => input)
+      .find((input) => requestUrl(input).includes('/organization'))
+    expect(request).toBeInstanceOf(Request)
+    expect((request as Request).headers.get('X-Organization-Id')).toBe(tenantA)
+  })
+
+  it('does not render a late response from the previous tenant after a switch', async () => {
+    const oldRequest = deferred<{ tenant: string }>()
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+    })
+    function Probe() {
+      const [active, setActive] = useState(tenantA)
+      const query = useOrganizationQuery(active, 'probe', async (id) =>
+        id === tenantA ? oldRequest.promise : { tenant: id },
+      )
+      return (
+        <div>
+          <button onClick={() => setActive(tenantB)}>Pilih tenant B</button>
+          <output>{query.data?.tenant ?? 'loading'}</output>
+        </div>
+      )
+    }
+    render(
+      <QueryClientProvider client={client}>
+        <Probe />
+      </QueryClientProvider>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Pilih tenant B' }))
+    expect(await screen.findByText(tenantB)).toBeInTheDocument()
+    await act(async () => {
+      oldRequest.resolve({ tenant: tenantA })
+      await oldRequest.promise
+    })
+    expect(screen.getByText(tenantB)).toBeInTheDocument()
+    expect(client.getQueryData(['organization', tenantB, 'probe'])).toEqual({
+      tenant: tenantB,
+    })
+  })
+})
+
+describe('shared portal components', () => {
+  it('exposes an accessible loading state for lazy routes', () => {
+    render(<RouteLoading />)
+    expect(screen.getByRole('status')).toHaveTextContent('Memuat portal…')
+    expect(screen.getByRole('main')).toHaveAttribute('aria-busy', 'true')
+  })
+
+  it('shows a safe fallback when rendering fails', () => {
+    const errorLog = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined)
+    function BrokenPage(): never {
+      throw new Error('synthetic render failure')
+    }
+    render(
+      <PortalErrorBoundary>
+        <BrokenPage />
+      </PortalErrorBoundary>,
+    )
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Halaman tidak dapat ditampilkan',
+    )
+    expect(
+      screen.getByRole('link', { name: 'Muat ulang portal' }),
+    ).toHaveAttribute('href', '/')
+    errorLog.mockRestore()
+  })
+})

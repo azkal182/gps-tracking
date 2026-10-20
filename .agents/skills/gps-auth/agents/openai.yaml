@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPS Auth and Tenants"
+  short_description: "Implement GPS identity and tenant boundaries"
+  default_prompt: "Use $gps-auth for the relevant backend-tracker task and record evidence in the project backlog."

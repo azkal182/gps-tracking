@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPS Tracking Core"
+  short_description: "Implement GPS sessions, ingestion and realtime"
+  default_prompt: "Use $gps-tracking for the relevant backend-tracker task and record evidence in the project backlog."

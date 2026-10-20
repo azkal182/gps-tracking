@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Backend and portal quality
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5-alpine@sha256:894f570c0cf0664ed5576a8fd5d5bfb8fb1b19d592885b686c3a88c8bd90c41f
+        env:
+          POSTGRES_DB: tracker_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tracker_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@1.99.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.11.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install portal dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit Rust dependencies (RustSec)
+        run: |
+          cargo install cargo-audit --version 0.22.2 --locked
+          cargo audit --ignore RUSTSEC-2023-0071
+
+      - name: Audit production portal dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Audit portal development dependencies
+        run: pnpm --filter @backend-tracker/portal audit --dev --audit-level high --ignore GHSA-vfj7-8cjw-p6xm
+
+      - name: Validate OpenAPI examples and generated client
+        run: pnpm contracts:check
+
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+
+      - name: Lint Rust workspace
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Test Rust workspace
+        run: cargo test --workspace
+
+      - name: Test fresh and upgrade migrations on PostgreSQL
+        env:
+          GPS_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/tracker_test
+        run: cargo test -p tracking-storage --test database_migrations -- --ignored --test-threads=1
+
+      - name: Lint portal and formatting
+        run: pnpm lint
+
+      - name: Typecheck portal
+        run: pnpm typecheck
+
+      - name: Test portal
+        run: pnpm test
+
+      - name: Build portal
+        run: pnpm build

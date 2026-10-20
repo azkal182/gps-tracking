@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPS Portal"
+  short_description: "Build management, live maps and GPS history"
+  default_prompt: "Use $gps-portal for the relevant backend-tracker task and record evidence in the project backlog."

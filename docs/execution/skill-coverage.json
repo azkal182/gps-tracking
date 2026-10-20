@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "planning": {
+    "docs/README.md": [
+      "gps-plan"
+    ],
+    "docs/gps-tracking-baseline-final.md": [
+      "gps-plan",
+      "gps-backlog",
+      "gps-release"
+    ],
+    "docs/gps-tracking-backend-summary.md": [
+      "gps-plan"
+    ],
+    "docs/gps-tracking-app-spec.md": [
+      "gps-plan",
+      "gps-storage",
+      "gps-tracking"
+    ],
+    "docs/gps-tracking-api-contract.md": [
+      "gps-contracts",
+      "gps-storage",
+      "gps-tracking",
+      "gps-portal"
+    ],
+    "docs/gps-tracking-management-api.md": [
+      "gps-contracts",
+      "gps-auth",
+      "gps-portal"
+    ],
+    "docs/gps-tracking-technical-decisions.md": [
+      "gps-plan",
+      "gps-contracts",
+      "gps-auth",
+      "gps-portal",
+      "gps-release"
+    ],
+    "docs/gps-tracking-database-operations.md": [
+      "gps-auth",
+      "gps-storage",
+      "gps-tracking",
+      "gps-release"
+    ],
+    "docs/gps-tracking-portal-spec.md": [
+      "gps-auth",
+      "gps-portal"
+    ],
+    "docs/gps-tracking-frontend-stack.md": [
+      "gps-portal"
+    ],
+    "docs/gps-tracking-implementation-plan.md": [
+      "gps-backlog",
+      "gps-release"
+    ]
+  }
+}

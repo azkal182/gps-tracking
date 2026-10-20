@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPS Verification and Release"
+  short_description: "Verify GPS foundation and MVP release evidence"
+  default_prompt: "Use $gps-release for the relevant backend-tracker task and record evidence in the project backlog."

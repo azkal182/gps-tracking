@@ -1,0 +1,35 @@
+[workspace]
+resolver = "2"
+members = [
+    "apps/server",
+    "crates/tracking-core",
+    "crates/tracking-protocols",
+    "crates/tracking-storage",
+    "crates/tracking-realtime",
+]
+
+[workspace.package]
+edition = "2024"
+license = "UNLICENSED"
+rust-version = "1.85"
+
+[workspace.dependencies]
+axum = { version = "=0.8.4", features = ["ws"] }
+argon2 = "=0.5.3"
+aes-gcm = "=0.10.3"
+base64 = "=0.22.1"
+hmac = "=0.12.1"
+rand = "=0.8.5"
+serde = { version = "=1.0.219", features = ["derive"] }
+serde_json = "=1.0.140"
+sha2 = "=0.10.9"
+sha1 = "=0.10.6"
+tokio = { version = "=1.45.1", features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
+sqlx = { version = "=0.8.6", default-features = false, features = ["macros", "migrate", "postgres", "runtime-tokio-rustls"] }
+subtle = "=2.6.1"
+uuid = { version = "=1.17.0", features = ["v4"] }
+tracing = "=0.1.44"
+tracing-subscriber = { version = "=0.3.23", features = ["env-filter", "fmt"] }
+tower = { version = "=0.5.2", features = ["util"] }
+futures-util = "=0.3.31"
+tokio-tungstenite = "=0.26.2"

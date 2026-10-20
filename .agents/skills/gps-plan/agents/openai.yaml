@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPS Planning"
+  short_description: "Trace GPS requirements and resolve plan changes"
+  default_prompt: "Use $gps-plan for the relevant backend-tracker task and record evidence in the project backlog."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPS Storage"
+  short_description: "Build tenant-safe GPS storage and migrations"
+  default_prompt: "Use $gps-storage for the relevant backend-tracker task and record evidence in the project backlog."
