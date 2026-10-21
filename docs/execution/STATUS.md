@@ -2,7 +2,7 @@
 
 > Generated dari backlog.json; jangan edit langsung.
 
-Tanggal data: 2026-10-21
+Tanggal data: 2026-10-22
 
 **Siap deployment; pilot belum selesai.**
 
@@ -30,9 +30,9 @@ Sedang dikerjakan: tidak ada
 
 Task siap: tidak ada
 
-PORTAL-04 dan PORTAL-05 selesai: portal kini memiliki manajemen organisasi/anggota/grants serta detail dan lifecycle target/device dengan pencarian, cursor, konfirmasi dan credential metadata.
+PORTAL-04 dibuka kembali setelah audit menemukan tombol reissue undangan admin awal tidak mengirim form dan route email invite berakhir 404. Perbaikan route, submit, serta error feedback telah diuji dan dipush pada 2026-10-22.
 
-Langkah berikut: Lanjutkan dengan task MVP dependency-ready berikutnya; PILOT-02 tetap tercatat blocked sesuai arahan untuk menunda uji tenant manual.
+Langkah berikut: Pantau GitHub Actions untuk commit 0ce2032 dan verifikasi alur undangan pada staging dengan tautan undangan baru setelah deploy.
 
 Blocked PILOT-02: Staging deployment, migration, health/readiness, portal, and email activation smoke passed. Acceptance still lacks active off-host backup/WAL archive monitoring and authenticated cross-tenant smoke; the latter remains deferred per the user’s explicit prior direction. Staging currently has only local dumps, no backup cron match for deploy, archive_mode=off, and archive_command disabled. — Provision and authorize encrypted backup repository outside the VPS plus secret delivery and backup/WAL alerting; configure and verify pgBackRest backup/archive checks. When the user is ready, run the previously deferred authenticated cross-tenant smoke with synthetic tenant data, or receive explicit direction to keep that check deferred for this task.
 

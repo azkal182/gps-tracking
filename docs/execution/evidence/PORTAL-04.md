@@ -26,3 +26,25 @@ Halaman organisasi kini mengelola anggota: ubah role/status, cabut membership, d
 ## Batas verifikasi
 
 Route dan perubahan user response backend dikompilasi, tetapi endpoint `auth/me` dan transisi database tidak diuji langsung karena database disposable tidak tersedia. Test portal memakai fixture API; tidak ada email nyata yang dikirim. Server tetap satu-satunya otoritas untuk platform access, last-admin rules, tenant isolation, dan recent-auth policy.
+
+## Follow-up audit tombol dan undangan — 2026-10-22
+
+Task dibuka kembali setelah uji portal pengguna menemukan undangan admin awal tidak dapat dikirim ulang dan tautan email undangan membuka 404. Audit menemukan router portal hanya menerima `/invite/accept`, sedangkan email dispatcher mengirim ke `/accept-invitation`; tombol `Kirim ulang undangan` pada form platform memakai Base UI button default (`type=button`) sehingga `onSubmit` tidak pernah dipanggil. Tombol reissue tenant sudah memanggil endpoint setelah recent auth. Sisa form submit pada halaman-halaman portal telah memakai `type=submit`, dan tombol navigasi/aksi lain memakai handler yang sesuai.
+
+Perbaikan:
+- Tambah route `/accept-invitation` sambil mempertahankan route lama; token fragment tetap dibaca lalu dihapus dari address bar.
+- Beri `type="submit"` pada tombol reissue admin awal.
+- Tampilkan error untuk aksi konfirmasi gagal dan pencabutan sesi login; tombol pencabutan menunjukkan status proses dan tidak lagi menelan kegagalan.
+- Tambah tes route link email, submit/re-auth/reissue admin awal, error action umum, serta kegagalan pencabutan sesi.
+
+Verifikasi aktual 2026-10-22:
+
+| Perintah | Hasil |
+|---|---|
+| `pnpm --dir apps/portal test` | Lulus: 11 file, 46 tes |
+| `pnpm --dir apps/portal typecheck` | Lulus |
+| `pnpm --dir apps/portal lint` | Lulus |
+| `git diff --check` | Lulus |
+| Audit interaksi dan form JSX seluruh `apps/portal/src/**/*.tsx` | Tidak ditemukan tombol form submit lain tanpa `type=submit`; aksi mutasi live tidak diklik saat audit |
+
+Commit `0ce2032` dipush ke `origin/main`; status workflow deploy staging belum diverifikasi pada evidence ini. Tautan undangan yang dibagikan pengguna harus dianggap tidak rahasia lagi; gunakan undangan baru setelah route diperbarui di staging. Email/undangan nyata tidak dikirim oleh tes.

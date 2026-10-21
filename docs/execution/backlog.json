@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-21",
+  "updated_at": "2026-10-22",
   "baseline": "docs/gps-tracking-baseline-final.md",
   "phases": [
     {
@@ -72,8 +72,8 @@
   "handoff": {
     "current_task": null,
     "next_task": null,
-    "summary": "PORTAL-04 dan PORTAL-05 selesai: portal kini memiliki manajemen organisasi/anggota/grants serta detail dan lifecycle target/device dengan pencarian, cursor, konfirmasi dan credential metadata.",
-    "next_action": "Lanjutkan dengan task MVP dependency-ready berikutnya; PILOT-02 tetap tercatat blocked sesuai arahan untuk menunda uji tenant manual."
+    "summary": "PORTAL-04 dibuka kembali setelah audit menemukan tombol reissue undangan admin awal tidak mengirim form dan route email invite berakhir 404. Perbaikan route, submit, serta error feedback telah diuji dan dipush pada 2026-10-22.",
+    "next_action": "Pantau GitHub Actions untuk commit 0ce2032 dan verifikasi alur undangan pada staging dengan tautan undangan baru setelah deploy."
   },
   "tasks": [
     {
@@ -997,7 +997,7 @@
       ],
       "owner": "Codex",
       "started_at": "2026-10-21",
-      "completed_at": "2026-10-21",
+      "completed_at": "2026-10-22",
       "blocked_reason": null,
       "unblock_action": null,
       "evidence": [
@@ -1211,7 +1211,7 @@
       "owner": "Codex",
       "started_at": "2026-10-20",
       "completed_at": null,
-      "blocked_reason": "Staging deployment, migration, health/readiness, portal, and email activation smoke passed. Acceptance still lacks active off-host backup/WAL archive monitoring and authenticated cross-tenant smoke; the latter remains deferred per the user\u2019s explicit prior direction. Staging currently has only local dumps, no backup cron match for deploy, archive_mode=off, and archive_command disabled.",
+      "blocked_reason": "Staging deployment, migration, health/readiness, portal, and email activation smoke passed. Acceptance still lacks active off-host backup/WAL archive monitoring and authenticated cross-tenant smoke; the latter remains deferred per the user’s explicit prior direction. Staging currently has only local dumps, no backup cron match for deploy, archive_mode=off, and archive_command disabled.",
       "unblock_action": "Provision and authorize encrypted backup repository outside the VPS plus secret delivery and backup/WAL alerting; configure and verify pgBackRest backup/archive checks. When the user is ready, run the previously deferred authenticated cross-tenant smoke with synthetic tenant data, or receive explicit direction to keep that check deferred for this task.",
       "evidence": [
         "docs/execution/evidence/PILOT-02.md"
@@ -1334,7 +1334,7 @@
         "docs/execution/DECISIONS.md"
       ],
       "acceptance": [
-        "POSITION_RETENTION_DAYS tervalidasi 1\u201336500, default 365, dan digunakan ingestion serta retention worker.",
+        "POSITION_RETENTION_DAYS tervalidasi 1–36500, default 365, dan digunakan ingestion serta retention worker.",
         "Expiry baru memakai konfigurasi; penurunan konfigurasi membuat worker purge row lama tanpa membuka akses payload lintas tenant.",
         "Fresh/upgrade migration, default kalender, nilai 60 hari, purge/RLS dan regression tests lulus; dokumentasi .env dan operasi menjelaskan rollout."
       ],
