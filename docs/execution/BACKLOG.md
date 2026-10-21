@@ -524,6 +524,43 @@ Sumber: [gps-tracking-portal-spec.md](../../docs/gps-tracking-portal-spec.md), [
 
 Evidence: [PORTAL-03.md](../../docs/execution/evidence/PORTAL-03.md)
 
+### PORTAL-04 — Portal manajemen organisasi, anggota dan grants
+
+Status: **done** · Scope: mvp · Owner: Codex
+
+Dependensi: ORG-01, ORG-02, ORG-03, PORTAL-01
+
+Skill: `$gps-portal`, `$gps-auth`, `$gps-contracts`
+
+Acceptance:
+- Platform admin memiliki halaman untuk daftar, membuat organisasi beserta undangan admin awal, dan suspend/reactivate organisasi; UI hanya metadata organisasi, backend tetap sumber otorisasi dan recent MFA diwajibkan sesuai kontrak.
+- Admin organisasi dapat mengubah role/status dan mencabut membership serta membaca/mengganti grants anggota; UI menegakkan recent authentication, last-admin protection tetap server-side, dan grant editor hanya memakai resource tenant aktif.
+- Status hak platform yang diperlukan untuk navigasi tersedia dari profil pengguna sendiri dengan kontrak eksplisit; nilai UI tidak menjadi pengganti authorization backend.
+- Komponen memiliki empty/loading/error/success states, konfirmasi tindakan berisiko, query cache terikat tenant, dan test untuk platform/non-platform, tenant switch, member/grant mutations dan error.
+
+Sumber: [gps-tracking-portal-spec.md](../../docs/gps-tracking-portal-spec.md), [gps-tracking-management-api.md](../../docs/gps-tracking-management-api.md), [gps-tracking-api-contract.md](../../docs/gps-tracking-api-contract.md)
+
+Evidence: [PORTAL-04.md](../../docs/execution/evidence/PORTAL-04.md)
+
+### PORTAL-05 — Portal detail dan lifecycle target/device yang lengkap
+
+Status: **done** · Scope: mvp · Owner: Codex
+
+Dependensi: DEVICE-01, DEVICE-02, DEVICE-03, PORTAL-01
+
+Skill: `$gps-portal`, `$gps-auth`
+
+Acceptance:
+- Target dapat dibuka sebagai detail dan create/update mengelola name, external_ref dan metadata; tidak menambahkan hard delete yang bertentangan dengan lifecycle histori.
+- Device dapat dilihat detail dan diedit pada name, metadata, ingestion_policy dan enabled; protocol/identifier tetap immutable. Daftar credential menunjukkan metadata saja dan mendukung revoke; secret token hanya tampil sekali setelah rotasi.
+- Daftar target/device memakai query/filter yang didukung API serta cursor pagination tanpa melewati tenant atau grant; tracking sessions memakai filter/cursor yang didukung API.
+- Disable device yang mencabut credential, credential revoke, dan end session memiliki konfirmasi yang jelas; form memberi feedback dan error/conflict actionable.
+- Test mencakup edit field, cursor/filter changes, no-secret credential listing, object grants, tenant switch, destructive confirmation dan API error.
+
+Sumber: [gps-tracking-portal-spec.md](../../docs/gps-tracking-portal-spec.md), [gps-tracking-api-contract.md](../../docs/gps-tracking-api-contract.md), [gps-tracking-management-api.md](../../docs/gps-tracking-management-api.md)
+
+Evidence: [PORTAL-05.md](../../docs/execution/evidence/PORTAL-05.md)
+
 ## P10 — Hardening dan readiness
 
 ### OPS-01 — Purge retensi, audit dan logs
@@ -628,7 +665,7 @@ Evidence: [TENANT-01.md](../../docs/execution/evidence/TENANT-01.md)
 
 ### PILOT-01 — Image dan deployment preflight
 
-Status: **blocked** · Scope: mvp · Owner: Codex
+Status: **done** · Scope: mvp · Owner: Codex
 
 Dependensi: OPS-04
 
@@ -636,7 +673,7 @@ Skill: `$gps-release`
 
 Acceptance:
 - Multi-stage image static/Rust, Caddy TLS routing, non-root, readiness/migration preflight dan rollback guide.
-- Local/staging smoke passes; daftar domain/SMTP/map/backup/host prerequisites terverifikasi tanpa secret evidence.
+- Local/staging smoke and domain/SMTP/backup/host prerequisites are verified without secret evidence. Map/history UI smoke and authenticated cross-organization staging checks may be deferred from this preflight gate only by explicit user direction; any deferred checks must remain clearly recorded as unverified and be reopened or tracked as follow-up if the user reports an issue.
 - Sebelum pilot, uji image/build aplikasi sebelumnya terhadap schema hasil migration di staging: startup/readiness dan negative tenant-authorization smoke lulus; simpan digest kedua build dan hasilnya. Jika build sebelumnya belum pernah production, gunakan kandidat dari code state berurutan. Uji gagal/tidak tersedia berarti pilot tetap tertahan.
 
 Sumber: [gps-tracking-technical-decisions.md](../../docs/gps-tracking-technical-decisions.md), [gps-tracking-database-operations.md](../../docs/gps-tracking-database-operations.md), [DECISIONS.md](../../docs/execution/DECISIONS.md), [staging-vps-github-cicd.md](../../docs/staging-vps-github-cicd.md)
@@ -645,7 +682,7 @@ Evidence: [PILOT-01.md](../../docs/execution/evidence/PILOT-01.md)
 
 ### PILOT-02 — Pilot deployment terotorisasi
 
-Status: **todo** · Scope: mvp · Owner: —
+Status: **blocked** · Scope: mvp · Owner: Codex
 
 Dependensi: PILOT-01
 
@@ -657,7 +694,7 @@ Acceptance:
 
 Sumber: [gps-tracking-implementation-plan.md](../../docs/gps-tracking-implementation-plan.md), [gps-tracking-database-operations.md](../../docs/gps-tracking-database-operations.md)
 
-Evidence: belum tersedia
+Evidence: [PILOT-02.md](../../docs/execution/evidence/PILOT-02.md)
 
 ### PILOT-03 — Acceptance MVP dan handover
 

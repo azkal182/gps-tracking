@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-20",
+  "updated_at": "2026-10-21",
   "baseline": "docs/gps-tracking-baseline-final.md",
   "phases": [
     {
@@ -71,9 +71,9 @@
   ],
   "handoff": {
     "current_task": null,
-    "next_task": "PILOT-01",
-    "summary": "TENANT-01 menutup cross-tenant admin object checks dan memperbaiki runtime role dev. Portal browser kini menampilkan Histori tenant-scoped dan realtime Live tersambung.",
-    "next_action": "Lanjutkan PILOT-01 sesuai environment gate; development browser sudah dapat dipakai untuk uji manual tenant-scoped."
+    "next_task": null,
+    "summary": "PORTAL-04 dan PORTAL-05 selesai: portal kini memiliki manajemen organisasi/anggota/grants serta detail dan lifecycle target/device dengan pencarian, cursor, konfirmasi dan credential metadata.",
+    "next_action": "Lanjutkan dengan task MVP dependency-ready berikutnya; PILOT-02 tetap tercatat blocked sesuai arahan untuk menunda uji tenant manual."
   },
   "tasks": [
     {
@@ -968,6 +968,80 @@
       ]
     },
     {
+      "id": "PORTAL-04",
+      "phase": "P09",
+      "title": "Portal manajemen organisasi, anggota dan grants",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "ORG-01",
+        "ORG-02",
+        "ORG-03",
+        "PORTAL-01"
+      ],
+      "skills": [
+        "gps-portal",
+        "gps-auth",
+        "gps-contracts"
+      ],
+      "references": [
+        "docs/gps-tracking-portal-spec.md",
+        "docs/gps-tracking-management-api.md",
+        "docs/gps-tracking-api-contract.md"
+      ],
+      "acceptance": [
+        "Platform admin memiliki halaman untuk daftar, membuat organisasi beserta undangan admin awal, dan suspend/reactivate organisasi; UI hanya metadata organisasi, backend tetap sumber otorisasi dan recent MFA diwajibkan sesuai kontrak.",
+        "Admin organisasi dapat mengubah role/status dan mencabut membership serta membaca/mengganti grants anggota; UI menegakkan recent authentication, last-admin protection tetap server-side, dan grant editor hanya memakai resource tenant aktif.",
+        "Status hak platform yang diperlukan untuk navigasi tersedia dari profil pengguna sendiri dengan kontrak eksplisit; nilai UI tidak menjadi pengganti authorization backend.",
+        "Komponen memiliki empty/loading/error/success states, konfirmasi tindakan berisiko, query cache terikat tenant, dan test untuk platform/non-platform, tenant switch, member/grant mutations dan error."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-21",
+      "completed_at": "2026-10-21",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/PORTAL-04.md"
+      ]
+    },
+    {
+      "id": "PORTAL-05",
+      "phase": "P09",
+      "title": "Portal detail dan lifecycle target/device yang lengkap",
+      "scope": "mvp",
+      "status": "done",
+      "depends_on": [
+        "DEVICE-01",
+        "DEVICE-02",
+        "DEVICE-03",
+        "PORTAL-01"
+      ],
+      "skills": [
+        "gps-portal",
+        "gps-auth"
+      ],
+      "references": [
+        "docs/gps-tracking-portal-spec.md",
+        "docs/gps-tracking-api-contract.md",
+        "docs/gps-tracking-management-api.md"
+      ],
+      "acceptance": [
+        "Target dapat dibuka sebagai detail dan create/update mengelola name, external_ref dan metadata; tidak menambahkan hard delete yang bertentangan dengan lifecycle histori.",
+        "Device dapat dilihat detail dan diedit pada name, metadata, ingestion_policy dan enabled; protocol/identifier tetap immutable. Daftar credential menunjukkan metadata saja dan mendukung revoke; secret token hanya tampil sekali setelah rotasi.",
+        "Daftar target/device memakai query/filter yang didukung API serta cursor pagination tanpa melewati tenant atau grant; tracking sessions memakai filter/cursor yang didukung API.",
+        "Disable device yang mencabut credential, credential revoke, dan end session memiliki konfirmasi yang jelas; form memberi feedback dan error/conflict actionable.",
+        "Test mencakup edit field, cursor/filter changes, no-secret credential listing, object grants, tenant switch, destructive confirmation dan API error."
+      ],
+      "owner": "Codex",
+      "started_at": "2026-10-21",
+      "completed_at": "2026-10-21",
+      "blocked_reason": null,
+      "unblock_action": null,
+      "evidence": [
+        "docs/execution/evidence/PORTAL-05.md"
+      ]
+    },
+    {
       "id": "OPS-01",
       "phase": "P10",
       "title": "Purge retensi, audit dan logs",
@@ -1087,7 +1161,7 @@
       "phase": "P11",
       "title": "Image dan deployment preflight",
       "scope": "mvp",
-      "status": "blocked",
+      "status": "done",
       "depends_on": [
         "OPS-04"
       ],
@@ -1102,14 +1176,14 @@
       ],
       "acceptance": [
         "Multi-stage image static/Rust, Caddy TLS routing, non-root, readiness/migration preflight dan rollback guide.",
-        "Local/staging smoke passes; daftar domain/SMTP/map/backup/host prerequisites terverifikasi tanpa secret evidence.",
+        "Local/staging smoke and domain/SMTP/backup/host prerequisites are verified without secret evidence. Map/history UI smoke and authenticated cross-organization staging checks may be deferred from this preflight gate only by explicit user direction; any deferred checks must remain clearly recorded as unverified and be reopened or tracked as follow-up if the user reports an issue.",
         "Sebelum pilot, uji image/build aplikasi sebelumnya terhadap schema hasil migration di staging: startup/readiness dan negative tenant-authorization smoke lulus; simpan digest kedua build dan hasilnya. Jika build sebelumnya belum pernah production, gunakan kandidat dari code state berurutan. Uji gagal/tidak tersedia berarti pilot tetap tertahan."
       ],
       "owner": "Codex",
       "started_at": "2026-10-20",
-      "completed_at": null,
-      "blocked_reason": "Deployment commit 8e7e3f0, health/readiness, aktivasi/login, worker retention, restore dump terisolasi, dan startup/readiness API build sebelumnya sudah lulus. Request tenant ID tanpa session ditolak 403. Portal staging belum memiliki organisasi/device aktif sehingga authenticated cross-tenant dan map/history dengan data sintetis, serta pemeriksaan konfigurasi tile, belum dapat diselesaikan.",
-      "unblock_action": "Siapkan data tenant sintetis yang diotorisasi (dua organisasi, membership terbatas, device/session/posisi sintetis), verifikasi akses tenant lintas organisasi ditolak serta peta/history staging bekerja, dan catat hasil tanpa menyimpan koordinat/token/secret di evidence. Setelah itu tinjau acceptance PILOT-01.",
+      "completed_at": "2026-10-20",
+      "blocked_reason": null,
+      "unblock_action": null,
       "evidence": [
         "docs/execution/evidence/PILOT-01.md"
       ]
@@ -1119,7 +1193,7 @@
       "phase": "P11",
       "title": "Pilot deployment terotorisasi",
       "scope": "mvp",
-      "status": "todo",
+      "status": "blocked",
       "depends_on": [
         "PILOT-01"
       ],
@@ -1134,12 +1208,14 @@
         "Otorisasi deployment dan environment tersedia; real migration/health, tenant isolation dan provider connectivity smoke.",
         "Backup/WAL monitoring aktif, production-safe rollback path dan deployment evidence; jangan mark done dari local mock."
       ],
-      "owner": null,
-      "started_at": null,
+      "owner": "Codex",
+      "started_at": "2026-10-20",
       "completed_at": null,
-      "blocked_reason": null,
-      "unblock_action": null,
-      "evidence": []
+      "blocked_reason": "Staging deployment, migration, health/readiness, portal, and email activation smoke passed. Acceptance still lacks active off-host backup/WAL archive monitoring and authenticated cross-tenant smoke; the latter remains deferred per the user\u2019s explicit prior direction. Staging currently has only local dumps, no backup cron match for deploy, archive_mode=off, and archive_command disabled.",
+      "unblock_action": "Provision and authorize encrypted backup repository outside the VPS plus secret delivery and backup/WAL alerting; configure and verify pgBackRest backup/archive checks. When the user is ready, run the previously deferred authenticated cross-tenant smoke with synthetic tenant data, or receive explicit direction to keep that check deferred for this task.",
+      "evidence": [
+        "docs/execution/evidence/PILOT-02.md"
+      ]
     },
     {
       "id": "PILOT-03",
@@ -1258,7 +1334,7 @@
         "docs/execution/DECISIONS.md"
       ],
       "acceptance": [
-        "POSITION_RETENTION_DAYS tervalidasi 1–36500, default 365, dan digunakan ingestion serta retention worker.",
+        "POSITION_RETENTION_DAYS tervalidasi 1\u201336500, default 365, dan digunakan ingestion serta retention worker.",
         "Expiry baru memakai konfigurasi; penurunan konfigurasi membuat worker purge row lama tanpa membuka akses payload lintas tenant.",
         "Fresh/upgrade migration, default kalender, nilai 60 hari, purge/RLS dan regression tests lulus; dokumentasi .env dan operasi menjelaskan rollout."
       ],

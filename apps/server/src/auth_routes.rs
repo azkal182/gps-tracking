@@ -384,6 +384,7 @@ pub(super) struct AuthMeMembership {
 #[derive(Serialize)]
 pub(super) struct AuthMeResponse {
     pub(super) user: PublicUser,
+    pub(super) platform_admin: bool,
     pub(super) mfa_required: bool,
     pub(super) mfa_enabled: bool,
     pub(super) memberships: Vec<AuthMeMembership>,
@@ -414,9 +415,9 @@ pub(super) async fn get_me(
         return Err(StatusCode::FORBIDDEN);
     }
     let session = authenticate_cookie_session(&auth.pool, &headers, true).await?;
-    let (id, email, display_name, status, created_at, updated_at) =
-        sqlx::query_as::<_, (String, String, String, String, String, String)>(
-            "SELECT id::text,email_canonical,display_name,status,created_at::text,updated_at::text \
+    let (id, email, display_name, status, platform_admin, created_at, updated_at) =
+        sqlx::query_as::<_, (String, String, String, String, bool, String, String)>(
+            "SELECT id::text,email_canonical,display_name,status,platform_admin,created_at::text,updated_at::text \
          FROM users WHERE id=$1::uuid AND status='active'",
         )
         .bind(&session.user_id)
@@ -480,6 +481,7 @@ pub(super) async fn get_me(
             created_at,
             updated_at,
         },
+        platform_admin,
         mfa_required,
         mfa_enabled,
         memberships,

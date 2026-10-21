@@ -2,11 +2,11 @@
 
 > Generated dari backlog.json; jangan edit langsung.
 
-Tanggal data: 2026-10-20
+Tanggal data: 2026-10-21
 
 **Siap deployment; pilot belum selesai.**
 
-Implementasi MVP: **35/38 task done**. P00 dan POST tidak dihitung; ini bukan persentase waktu/effort.
+Implementasi MVP: **38/40 task done**. P00 dan POST tidak dihitung; ini bukan persentase waktu/effort.
 
 | Fase | Done/total | Status |
 |---|---:|---|
@@ -19,9 +19,9 @@ Implementasi MVP: **35/38 task done**. P00 dan POST tidak dihitung; ini bukan pe
 | P06 — Target/device dan kredensial | 4/4 | 4 done |
 | P07 — Session dan ingestion | 3/3 | 3 done |
 | P08 — Heartbeat, query dan realtime | 3/3 | 3 done |
-| P09 — Portal management dan peta | 3/3 | 3 done |
+| P09 — Portal management dan peta | 5/5 | 5 done |
 | P10 — Hardening dan readiness | 6/6 | 6 done |
-| P11 — Packaging dan pilot MVP | 0/3 | 1 blocked, 2 todo |
+| P11 — Packaging dan pilot MVP | 1/3 | 1 blocked, 1 done, 1 todo |
 | POST — Sesudah MVP | 0/3 | 3 deferred |
 
 ## Handoff
@@ -30,11 +30,11 @@ Sedang dikerjakan: tidak ada
 
 Task siap: tidak ada
 
-TENANT-01 menutup cross-tenant admin object checks dan memperbaiki runtime role dev. Portal browser kini menampilkan Histori tenant-scoped dan realtime Live tersambung.
+PORTAL-04 dan PORTAL-05 selesai: portal kini memiliki manajemen organisasi/anggota/grants serta detail dan lifecycle target/device dengan pencarian, cursor, konfirmasi dan credential metadata.
 
-Langkah berikut: Lanjutkan PILOT-01 sesuai environment gate; development browser sudah dapat dipakai untuk uji manual tenant-scoped.
+Langkah berikut: Lanjutkan dengan task MVP dependency-ready berikutnya; PILOT-02 tetap tercatat blocked sesuai arahan untuk menunda uji tenant manual.
 
-Blocked PILOT-01: Deployment commit 8e7e3f0, health/readiness, aktivasi/login, worker retention, restore dump terisolasi, dan startup/readiness API build sebelumnya sudah lulus. Request tenant ID tanpa session ditolak 403. Portal staging belum memiliki organisasi/device aktif sehingga authenticated cross-tenant dan map/history dengan data sintetis, serta pemeriksaan konfigurasi tile, belum dapat diselesaikan. — Siapkan data tenant sintetis yang diotorisasi (dua organisasi, membership terbatas, device/session/posisi sintetis), verifikasi akses tenant lintas organisasi ditolak serta peta/history staging bekerja, dan catat hasil tanpa menyimpan koordinat/token/secret di evidence. Setelah itu tinjau acceptance PILOT-01.
+Blocked PILOT-02: Staging deployment, migration, health/readiness, portal, and email activation smoke passed. Acceptance still lacks active off-host backup/WAL archive monitoring and authenticated cross-tenant smoke; the latter remains deferred per the user’s explicit prior direction. Staging currently has only local dumps, no backup cron match for deploy, archive_mode=off, and archive_command disabled. — Provision and authorize encrypted backup repository outside the VPS plus secret delivery and backup/WAL alerting; configure and verify pgBackRest backup/archive checks. When the user is ready, run the previously deferred authenticated cross-tenant smoke with synthetic tenant data, or receive explicit direction to keep that check deferred for this task.
 
 Batas verifikasi:
 

@@ -4806,12 +4806,16 @@ components:
       additionalProperties: false
       required:
         - user
+        - platform_admin
         - mfa_required
         - mfa_enabled
         - memberships
       properties:
         user:
           '$ref': '#/components/schemas/ManagementUser'
+        platform_admin:
+          type: boolean
+          description: Whether the authenticated user has the platform operator role. This is a UI hint only; each operation is still authorized by the server.
         mfa_required:
           type: boolean
         mfa_enabled:
@@ -4822,6 +4826,7 @@ components:
             '$ref': '#/components/schemas/ManagementMembership'
       examples:
         - user: *8
+          platform_admin: false
           mfa_required: true
           mfa_enabled: true
           memberships: []

@@ -1709,6 +1709,7 @@ export interface components {
      *         "created_at": "2026-10-19T03:00:00Z",
      *         "updated_at": "2026-10-19T03:00:00Z"
      *       },
+     *       "platform_admin": false,
      *       "mfa_required": true,
      *       "mfa_enabled": true,
      *       "memberships": []
@@ -1716,6 +1717,8 @@ export interface components {
      */
     AuthMeResponse: {
       user: components['schemas']['ManagementUser']
+      /** @description Whether the authenticated user has the platform operator role. This is a UI hint only; each operation is still authorized by the server. */
+      platform_admin: boolean
       mfa_required: boolean
       mfa_enabled: boolean
       memberships: components['schemas']['ManagementMembership'][]

@@ -10,6 +10,7 @@ import {
   useOrganizationQuery,
 } from '@/portal-context'
 import { Button } from '@/components/ui/button'
+import { MemberAccessPanel } from '@/features/organization/member-access-panel'
 
 const invitationSchema = z.object({
   email: z.email(),
@@ -105,33 +106,15 @@ export function OrganizationPage() {
     setNotice(null)
     setPendingAction({ tenantId: organizationId, run })
   }
-  const [memberCursorState, setMemberCursorState] = useState<{
-    tenantId: string | null
-    cursors: (string | null)[]
-  }>({ tenantId: null, cursors: [null] })
   const [invitationCursorState, setInvitationCursorState] = useState<{
     tenantId: string | null
     cursors: (string | null)[]
   }>({ tenantId: null, cursors: [null] })
-  const memberCursors =
-    memberCursorState.tenantId === organizationId
-      ? memberCursorState.cursors
-      : [null]
   const invitationCursors =
     invitationCursorState.tenantId === organizationId
       ? invitationCursorState.cursors
       : [null]
-  const memberCursor = memberCursors.at(-1) ?? null
   const invitationCursor = invitationCursors.at(-1) ?? null
-  const setMemberCursors = (
-    update: (current: (string | null)[]) => (string | null)[],
-  ) =>
-    setMemberCursorState((current) => ({
-      tenantId: organizationId,
-      cursors: update(
-        current.tenantId === organizationId ? current.cursors : [null],
-      ),
-    }))
   const setInvitationCursors = (
     update: (current: (string | null)[]) => (string | null)[],
   ) =>
@@ -171,26 +154,6 @@ export function OrganizationPage() {
     (m) => m.tenant_id === organizationId && m.status === 'active',
   )
   const canManage = activeMembership?.role === 'admin'
-  const members = useOrganizationQuery(
-    organizationId,
-    `members:${memberCursor ?? 'first'}`,
-    async (tenantId, signal) => {
-      const { data, error } = await portalApi.GET('/organization/members', {
-        params: {
-          header: { 'X-Organization-Id': tenantId },
-          query: {
-            limit: 100,
-            ...(memberCursor ? { cursor: memberCursor } : {}),
-          },
-        },
-        signal,
-      })
-      if (error || !data)
-        throw error ?? new Error('Daftar anggota tidak tersedia')
-      return data
-    },
-    !!canManage,
-  )
   const invitations = useOrganizationQuery(
     organizationId,
     `invitations:${invitationCursor ?? 'first'}`,
@@ -409,63 +372,11 @@ export function OrganizationPage() {
 
       {canManage ? (
         <>
-          <section className="bg-background space-y-4 rounded-xl border p-5">
-            <header>
-              <h2 className="text-xl font-semibold">Anggota</h2>
-              <p className="text-muted-foreground text-sm">
-                Daftar dibatasi pada organisasi aktif.
-              </p>
-            </header>
-            {members.isLoading && <p role="status">Memuat anggota…</p>}
-            {members.error && (
-              <p role="alert" className="text-destructive text-sm">
-                {portalErrorMessage(members.error)}
-              </p>
-            )}
-            <div className="divide-y">
-              {members.data?.data.map((member) => (
-                <div
-                  className="flex flex-wrap justify-between gap-2 py-3 text-sm"
-                  key={member.id}
-                >
-                  <span>
-                    {member.user?.display_name ||
-                      member.user?.email ||
-                      member.user_id}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {member.role} · {member.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={memberCursors.length < 2}
-                onClick={() =>
-                  setMemberCursors((current) => current.slice(0, -1))
-                }
-              >
-                Sebelumnya
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={!members.data?.next_cursor}
-                onClick={() => {
-                  if (members.data?.next_cursor)
-                    setMemberCursors((current) => [
-                      ...current,
-                      members.data!.next_cursor,
-                    ])
-                }}
-              >
-                Berikutnya
-              </Button>
-            </div>
-          </section>
+          <MemberAccessPanel
+            key={organizationId}
+            organizationId={organizationId}
+            isAdmin={canManage}
+          />
           <section className="bg-background space-y-4 rounded-xl border p-5">
             <header>
               <h2 className="text-xl font-semibold">Undang anggota</h2>

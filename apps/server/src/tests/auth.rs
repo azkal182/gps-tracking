@@ -636,7 +636,7 @@ async fn mfa_login_recovery_and_reenrollment_are_atomic_and_restricted() {
     let email = format!("mfa-{}@example.invalid", &user_id[..8]);
     let password = "synthetic mfa password 123";
     let password_hash = hash_password(password.as_bytes()).unwrap();
-    sqlx::query("INSERT INTO users(id,email_canonical,display_name,password_hash) VALUES($1::uuid,$2,'Synthetic MFA',$3)").bind(&user_id).bind(&email).bind(password_hash).execute(&pool).await.unwrap();
+    sqlx::query("INSERT INTO users(id,email_canonical,display_name,password_hash,platform_admin) VALUES($1::uuid,$2,'Synthetic MFA',$3,TRUE)").bind(&user_id).bind(&email).bind(password_hash).execute(&pool).await.unwrap();
     let org = uuid::Uuid::new_v4().to_string();
     sqlx::query("INSERT INTO organizations(id,name) VALUES($1::uuid,'MFA test')")
         .bind(&org)
@@ -834,6 +834,7 @@ async fn mfa_login_recovery_and_reenrollment_are_atomic_and_restricted() {
     );
     let me: serde_json::Value = serde_json::from_slice(&me_body).unwrap();
     assert_eq!(me["user"]["id"], user_id);
+    assert_eq!(me["platform_admin"], true);
     assert_eq!(me["mfa_required"], true);
     assert_eq!(me["mfa_enabled"], true);
     assert_eq!(me["memberships"][0]["tenant_id"], org);

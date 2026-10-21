@@ -253,3 +253,19 @@ Dengan izin SSH pengguna, API/DB health dan HTTPS readiness lulus; pengguna meng
 ## 2026-10-20 — PILOT-01 staging smoke dan restore diverifikasi
 
 GitHub Actions run #3 (`8e7e3f0`) lulus seluruh quality/build/deploy. API, DB dan portal berjalan; `/healthz` serta `/readyz` sehat. Healthcheck inherited pada retention dinonaktifkan, worker purge berjalan. API build sebelumnya `4faa2ed` startup/readiness lulus terhadap schema terkini; tenant header tanpa session ditolak 403 pada API lama dan aktif. Backup staging berhasil di-restore ke PostGIS 3.5.7 terisolasi dan memuat 19 migrasi. Digest kedua build dan batas cakupan tercatat di [PILOT-01](./evidence/PILOT-01.md). Browser portal belum memiliki organisasi/device aktif, jadi authenticated cross-tenant dan map/history smoke dengan data sintetis masih tertunda.
+
+## 2026-10-20 — PILOT-01 ditutup dengan uji manual ditunda
+
+Atas arahan eksplisit pengguna, pemeriksaan peta/histori dengan data staging serta isolasi lintas-organisasi oleh sesi terautentikasi dilewati untuk saat ini; pengguna akan memberi tahu saat uji coba manual berlangsung. PILOT-01 ditandai done berdasarkan bukti preflight, deploy, health/readiness, aktivasi/login yang dikonfirmasi pengguna, retention, restore, dan smoke image sebelumnya. Uji yang dilewati tetap tercatat sebagai belum diverifikasi, bukan lulus. Jika ditemukan masalah saat uji coba, buka kembali task atau catat follow-up dengan evidence aktual. Evidence: [PILOT-01](./evidence/PILOT-01.md). Berikutnya: task dependency-ready berikutnya di P11.
+
+## 2026-10-20 — PILOT-02 preflight staging dan backup/WAL diperiksa
+
+GitHub Actions run #4 untuk `3364b94` sukses pada quality, migration CI, publish image dan deploy. Pemeriksaan SSH read-only menemukan API/DB sehat, portal/retention hidup, health/readiness/portal HTTP 200, dan 19 migrasi sampai `202610200003`. Pengguna sebelumnya mengonfirmasi email aktivasi diterima. Backup dump lokal tersedia dan restore dibuktikan di PILOT-01, tetapi tidak ada cron backup terdeteksi; PostgreSQL `archive_mode=off` dan `archive_command` disabled, sehingga backup/WAL off-host serta alert belum aktif. Authenticated cross-tenant smoke tetap ditunda mengikuti arahan pengguna dan tidak diklaim lulus. PILOT-02 diblokir pada acceptance yang belum terpenuhi. Evidence: [PILOT-02](./evidence/PILOT-02.md).
+
+## 2026-10-21 — PORTAL-04 manajemen organisasi dan akses selesai
+
+Portal menambahkan konsol platform untuk daftar/buat/suspend/reactivate organisasi, undangan admin awal dan reissue bootstrap, dengan recent authentication. Profil `/auth/me` menyertakan `platform_admin` sebagai petunjuk UI; OpenAPI/docs/client diperbarui, server tetap sumber otorisasi. Admin organisasi dapat mengubah role/status, mencabut membership dan mengganti grants eksplisit dengan recent authentication. Tes UI mencakup akses platform/non-platform, perubahan role dan grants. Portal typecheck, lint, build, contract lint, server compile/test, serta tracker validation lulus; database-backed server tests dilewati karena `GPS_TEST_DATABASE_URL` disposable tidak tersedia. Evidence: [PORTAL-04](./evidence/PORTAL-04.md).
+
+## 2026-10-21 — PORTAL-05 detail dan lifecycle target/device selesai
+
+Target kini dapat dibuka sebagai detail tenant-scoped dan dicari/dikelola termasuk metadata; device dapat diedit pada field mutable, daftar credential metadata dapat dipaginasi dan credential dicabut dengan reauthentication. Pencarian target/device dan cursor; session filter status/cursor; disable device serta akhir session dikonfirmasi. Tidak ada hard delete yang menghapus histori. Tes portal mencakup target filter/detail, mutable device edit, credential no-secret/revoke, disable confirmation dan token rotasi one-time. Portal typecheck/lint/build/full suite, server compile/tests, contract lint, dan tracker tests lulus. Evidence: [PORTAL-05](./evidence/PORTAL-05.md).

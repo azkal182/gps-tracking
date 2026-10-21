@@ -5,6 +5,7 @@ import {
   Clock3,
   LogOut,
   MapPinned,
+  ShieldCheck,
   UsersRound,
 } from 'lucide-react'
 import { Link, Outlet, useLocation } from 'react-router'
@@ -61,7 +62,18 @@ export function PortalShell() {
             aria-label="Navigasi utama"
             className="mt-3 flex gap-1 overflow-x-auto md:mt-10 md:flex-col md:overflow-visible"
           >
-            {navigation.map(({ href, label, icon: Icon }) => {
+            {[
+              ...navigation,
+              ...(auth.me?.platform_admin
+                ? [
+                    {
+                      href: '/platform/organizations',
+                      label: 'Organisasi platform',
+                      icon: ShieldCheck,
+                    },
+                  ]
+                : []),
+            ].map(({ href, label, icon: Icon }) => {
               const active = location.pathname === href
               return (
                 <Link

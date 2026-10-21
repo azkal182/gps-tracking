@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { KeyRound, Plus, Radio, ShieldAlert } from 'lucide-react'
 import { portalApi, portalErrorMessage, withPortalMutation } from '@/api/client'
 import { Button } from '@/components/ui/button'
+import { ConfirmAction } from '@/components/confirm-action'
 import {
   organizationQueryKey,
   useOrganizationQuery,
@@ -13,7 +14,12 @@ import {
   usePortalTenant,
 } from '@/portal-context'
 
-type Target = { id: string; name: string; external_ref: string | null }
+type Target = {
+  id: string
+  name: string
+  external_ref: string | null
+  metadata?: Record<string, unknown>
+}
 type Device = {
   id: string
   name: string
@@ -21,6 +27,7 @@ type Device = {
   protocol: string
   enabled: boolean
   ingestion_policy: 'session_only' | 'always'
+  metadata?: Record<string, unknown>
 }
 type TrackingSession = {
   id: string
@@ -34,17 +41,37 @@ type TrackingSession = {
 const targetSchema = z.object({
   name: z.string().trim().min(1).max(150),
   external_ref: z.string().trim().max(150).optional(),
+  metadata_json: z
+    .string()
+    .max(16_384)
+    .refine((value) => {
+      try {
+        return (
+          !!JSON.parse(value) &&
+          typeof JSON.parse(value) === 'object' &&
+          !Array.isArray(JSON.parse(value))
+        )
+      } catch {
+        return false
+      }
+    }, 'Metadata harus berupa objek JSON yang valid.'),
 })
 const deviceSchema = z.object({
   name: z.string().trim().min(1).max(150),
   identifier: z.string().trim().min(1).max(200),
   protocol: z.literal('http-json'),
   ingestion_policy: z.enum(['session_only', 'always']),
+  metadata_json: targetSchema.shape.metadata_json,
 })
 const sessionSchema = z.object({ target_id: z.uuid(), device_id: z.uuid() })
 const reauthenticationSchema = z.object({
   password: z.string().min(15).max(128),
   code: z.string().optional(),
+})
+const deviceEditSchema = z.object({
+  name: z.string().trim().min(1).max(150),
+  ingestion_policy: z.enum(['session_only', 'always']),
+  metadata_json: targetSchema.shape.metadata_json,
 })
 
 function FormError({ error }: { error: unknown }) {
@@ -112,6 +139,25 @@ function TrackingManagementContent({
   const queryClient = useQueryClient()
   const [form, setForm] = useState<'target' | 'device' | 'session' | null>(null)
   const [targetToEdit, setTargetToEdit] = useState<Target | null>(null)
+  const [targetDetailId, setTargetDetailId] = useState<string | null>(null)
+  const [deviceToEdit, setDeviceToEdit] = useState<Device | null>(null)
+  const [credentialListDevice, setCredentialListDevice] =
+    useState<Device | null>(null)
+  const [credentialCursors, setCredentialCursors] = useState<(string | null)[]>(
+    [null],
+  )
+  const [credentialToRevoke, setCredentialToRevoke] = useState<{
+    device: Device
+    id: string
+  } | null>(null)
+  const [targetSearch, setTargetSearch] = useState('')
+  const [deviceSearch, setDeviceSearch] = useState('')
+  const [targetCursors, setTargetCursors] = useState<(string | null)[]>([null])
+  const [deviceCursors, setDeviceCursors] = useState<(string | null)[]>([null])
+  const [sessionCursors, setSessionCursors] = useState<(string | null)[]>([
+    null,
+  ])
+  const [sessionStatus, setSessionStatus] = useState('')
   const [oneTimeToken, setOneTimeToken] = useState<{
     device: string
     token: string
@@ -172,63 +218,121 @@ function TrackingManagementContent({
     hasGrant('device', id, 'credentials:write')
   const targets = useOrganizationQuery(
     organizationId,
-    'tracking-targets',
+    `tracking-targets:${targetSearch}:${targetCursors.at(-1) ?? 'first'}`,
     async (tenantId, signal) => {
       const { data, error } = await portalApi.GET('/targets', {
         params: {
           header: { 'X-Organization-Id': tenantId },
-          query: { limit: 100 },
+          query: {
+            limit: 50,
+            ...(targetSearch.trim() ? { q: targetSearch.trim() } : {}),
+            ...(targetCursors.at(-1) ? { cursor: targetCursors.at(-1)! } : {}),
+          },
         },
         signal,
       })
       if (error || !data)
         throw error ?? new Error('Daftar target tidak tersedia')
-      return data.data as Target[]
+      return data
     },
+  )
+  const targetDetail = useOrganizationQuery(
+    organizationId,
+    `target-detail:${targetDetailId ?? 'none'}`,
+    async (tenantId, signal) => {
+      const { data, error } = await portalApi.GET('/targets/{target_id}', {
+        params: {
+          header: { 'X-Organization-Id': tenantId },
+          path: { target_id: targetDetailId! },
+        },
+        signal,
+      })
+      if (error || !data)
+        throw error ?? new Error('Detail target tidak tersedia')
+      return data
+    },
+    !!targetDetailId,
   )
   const devices = useOrganizationQuery(
     organizationId,
-    'tracking-devices',
+    `tracking-devices:${deviceSearch}:${deviceCursors.at(-1) ?? 'first'}`,
     async (tenantId, signal) => {
       const { data, error } = await portalApi.GET('/devices', {
         params: {
           header: { 'X-Organization-Id': tenantId },
-          query: { limit: 100 },
+          query: {
+            limit: 50,
+            ...(deviceSearch.trim() ? { q: deviceSearch.trim() } : {}),
+            ...(deviceCursors.at(-1) ? { cursor: deviceCursors.at(-1)! } : {}),
+          },
         },
         signal,
       })
       if (error || !data)
         throw error ?? new Error('Daftar device tidak tersedia')
-      return data.data as Device[]
+      return data
     },
   )
   const trackingSessions = useOrganizationQuery(
     organizationId,
-    'tracking-sessions',
+    `tracking-sessions:${sessionStatus}:${sessionCursors.at(-1) ?? 'first'}`,
     async (tenantId, signal) => {
       const { data, error } = await portalApi.GET('/sessions', {
         params: {
           header: { 'X-Organization-Id': tenantId },
-          query: { limit: 100 },
+          query: {
+            limit: 50,
+            ...(sessionStatus
+              ? { status: sessionStatus as 'active' | 'ended' }
+              : {}),
+            ...(sessionCursors.at(-1)
+              ? { cursor: sessionCursors.at(-1)! }
+              : {}),
+          },
         },
         signal,
       })
       if (error || !data)
         throw error ?? new Error('Daftar tracking session tidak tersedia')
-      return data.data as TrackingSession[]
+      return data
     },
   )
-  const writableTargets = (targets.data ?? []).filter((target) =>
+  const credentialPage = useOrganizationQuery(
+    organizationId,
+    `credentials:${credentialListDevice?.id ?? 'none'}:${credentialCursors.at(-1) ?? 'first'}`,
+    async (tenantId, signal) => {
+      const { data, error } = await portalApi.GET(
+        '/devices/{device_id}/credentials',
+        {
+          params: {
+            header: { 'X-Organization-Id': tenantId },
+            path: { device_id: credentialListDevice!.id },
+            query: {
+              limit: 50,
+              ...(credentialCursors.at(-1)
+                ? { cursor: credentialCursors.at(-1)! }
+                : {}),
+            },
+          },
+          signal,
+        },
+      )
+      if (error || !data) throw error ?? new Error('Credential tidak tersedia')
+      return data
+    },
+    !!credentialListDevice,
+  )
+  const writableTargets = (targets.data?.data ?? []).filter((target) =>
     canWriteTarget(target.id),
   )
-  const writableDevices = (devices.data ?? []).filter(
+  const writableDevices = (devices.data?.data ?? []).filter(
     (device) => device.enabled && canWriteDevice(device.id),
   )
   const canManageAny =
     canCreateTarget ||
     canCreateDevice ||
     writableTargets.length > 0 ||
-    (devices.data ?? []).some(
+    (devices.data?.data ?? []).some(
       (device) => canWriteDevice(device.id) || canRotateDevice(device.id),
     )
   const refresh = async () => {
@@ -247,6 +351,7 @@ function TrackingManagementContent({
             ...(values.external_ref
               ? { external_ref: values.external_ref }
               : {}),
+            metadata: JSON.parse(values.metadata_json),
           },
         })
         if (error) throw error
@@ -274,6 +379,7 @@ function TrackingManagementContent({
           body: {
             name: values.name,
             external_ref: values.external_ref || null,
+            metadata: JSON.parse(values.metadata_json),
           },
         })
         if (error) throw error
@@ -289,7 +395,13 @@ function TrackingManagementContent({
       withPortalMutation(async () => {
         const { error } = await portalApi.POST('/devices', {
           params: { header: { 'X-Organization-Id': organizationId! } },
-          body: values,
+          body: {
+            name: values.name,
+            identifier: values.identifier,
+            protocol: values.protocol,
+            ingestion_policy: values.ingestion_policy,
+            metadata: JSON.parse(values.metadata_json),
+          },
         })
         if (error) throw error
       }),
@@ -298,6 +410,34 @@ function TrackingManagementContent({
       setNotice(
         'Device terdaftar tanpa token. Terbitkan token secara terpisah saat siap.',
       )
+      await refresh()
+    },
+  })
+  const updateDevice = useMutation({
+    mutationFn: async ({
+      device,
+      values,
+    }: {
+      device: Device
+      values: z.infer<typeof deviceEditSchema>
+    }) =>
+      withPortalMutation(async () => {
+        const { error } = await portalApi.PATCH('/devices/{device_id}', {
+          params: {
+            header: { 'X-Organization-Id': organizationId! },
+            path: { device_id: device.id },
+          },
+          body: {
+            name: values.name,
+            ingestion_policy: values.ingestion_policy,
+            metadata: JSON.parse(values.metadata_json),
+          },
+        })
+        if (error) throw error
+      }),
+    onSuccess: async () => {
+      setDeviceToEdit(null)
+      setNotice('Detail device diperbarui.')
       await refresh()
     },
   })
@@ -384,6 +524,7 @@ function TrackingManagementContent({
     createTarget.error ??
     updateTarget.error ??
     createDevice.error ??
+    updateDevice.error ??
     setDeviceEnabled.error ??
     startSession.error ??
     endSession.error
@@ -392,6 +533,7 @@ function TrackingManagementContent({
     createTarget.isPending ||
     updateTarget.isPending ||
     createDevice.isPending ||
+    updateDevice.isPending ||
     setDeviceEnabled.isPending ||
     startSession.isPending ||
     endSession.isPending
@@ -462,6 +604,17 @@ function TrackingManagementContent({
           onSubmit={(value) => createDevice.mutate(value)}
         />
       )}
+      {deviceToEdit && (
+        <DeviceEditForm
+          busy={busy}
+          device={deviceToEdit}
+          allowAlways={!!isAdmin}
+          onCancel={() => setDeviceToEdit(null)}
+          onSubmit={(value) =>
+            updateDevice.mutate({ device: deviceToEdit, values: value })
+          }
+        />
+      )}
       {form === 'session' && targets.data && devices.data && (
         <SessionForm
           busy={busy}
@@ -490,6 +643,128 @@ function TrackingManagementContent({
             setCredentialDevice(null)
           }}
         />
+      )}
+      {credentialToRevoke && (
+        <CredentialRotationForm
+          busy={busy}
+          device={credentialToRevoke.device}
+          actionLabel="Konfirmasi autentikasi sebelum mencabut credential"
+          submitLabel="Konfirmasi dan cabut"
+          onCancel={() => setCredentialToRevoke(null)}
+          onSubmit={async (credentials) => {
+            await withPortalMutation(async () => {
+              const { error } = await portalApi.POST('/auth/reauthenticate', {
+                body: {
+                  password: credentials.password,
+                  ...(credentials.code ? { code: credentials.code } : {}),
+                },
+              })
+              if (error) throw error
+            })
+            await withPortalMutation(async () => {
+              const { error } = await portalApi.DELETE(
+                '/devices/{device_id}/credentials/{credential_id}',
+                {
+                  params: {
+                    header: { 'X-Organization-Id': organizationId! },
+                    path: {
+                      device_id: credentialToRevoke.device.id,
+                      credential_id: credentialToRevoke.id,
+                    },
+                  },
+                },
+              )
+              if (error) throw error
+            })
+            setCredentialToRevoke(null)
+            setNotice('Credential dicabut; histori lokasi tetap tersimpan.')
+            await refresh()
+            await queryClient.invalidateQueries({
+              queryKey: organizationQueryKey(
+                organizationId!,
+                `credentials:${credentialToRevoke.device.id}`,
+              ),
+            })
+          }}
+        />
+      )}
+      {credentialListDevice && (
+        <section className="bg-background space-y-3 rounded-xl border p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-semibold">
+              Metadata credential — {credentialListDevice.name}
+            </h2>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setCredentialListDevice(null)
+                setCredentialCursors([null])
+              }}
+            >
+              Tutup
+            </Button>
+          </div>
+          <p className="text-muted-foreground text-xs">
+            Daftar ini hanya menampilkan metadata; token/hash tidak pernah
+            dikirim oleh API.
+          </p>
+          {credentialPage.isLoading && <p role="status">Memuat credential…</p>}
+          {credentialPage.error && <FormError error={credentialPage.error} />}
+          {credentialPage.data?.data?.map((credential) => (
+            <div
+              key={credential.id}
+              className="flex flex-wrap items-center justify-between gap-2 border-t py-2 text-sm"
+            >
+              <span>
+                {credential.active ? 'Aktif' : 'Dicabut'} · dibuat{' '}
+                {new Date(credential.created_at).toLocaleString()}
+                {credential.revoked_at
+                  ? ` · dicabut ${new Date(credential.revoked_at).toLocaleString()}`
+                  : ''}
+              </span>
+              {credential.active && (
+                <ConfirmAction
+                  label="Cabut credential"
+                  variant="destructive"
+                  confirmation="Client yang memakai credential ini segera kehilangan akses."
+                  onConfirm={() =>
+                    setCredentialToRevoke({
+                      device: credentialListDevice,
+                      id: credential.id,
+                    })
+                  }
+                />
+              )}
+            </div>
+          ))}
+          <div className="flex justify-end gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={credentialCursors.length < 2}
+              onClick={() =>
+                setCredentialCursors((stack) => stack.slice(0, -1))
+              }
+            >
+              Sebelumnya
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!credentialPage.data?.next_cursor}
+              onClick={() => {
+                if (credentialPage.data?.next_cursor)
+                  setCredentialCursors((stack) => [
+                    ...stack,
+                    credentialPage.data!.next_cursor,
+                  ])
+              }}
+            >
+              Berikutnya
+            </Button>
+          </div>
+        </section>
       )}
       {oneTimeToken && (
         <div
@@ -525,16 +800,26 @@ function TrackingManagementContent({
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Targets</h2>
-            {targets.data?.length === 0 && (
+            {targets.data?.data?.length === 0 && (
               <span className="text-muted-foreground text-xs">Kosong</span>
             )}
           </div>
+          <input
+            aria-label="Cari target"
+            className="bg-background h-9 w-full rounded-md border px-3 text-sm"
+            value={targetSearch}
+            onChange={(event) => {
+              setTargetSearch(event.target.value)
+              setTargetCursors([null])
+            }}
+            placeholder="Cari nama target…"
+          />
           {targets.isLoading && <p role="status">Memuat target…</p>}
           {targets.error && <FormError error={targets.error} />}
-          {targets.data?.length === 0 && (
+          {targets.data?.data?.length === 0 && (
             <Empty text="Belum ada target di organisasi ini." />
           )}
-          {targets.data?.map((target) => (
+          {targets.data?.data?.map((target) => (
             <article
               className="bg-background rounded-xl border p-4"
               key={target.id}
@@ -544,6 +829,47 @@ function TrackingManagementContent({
                 {target.external_ref || 'Tanpa external reference'} ·{' '}
                 {target.id}
               </p>
+              <Button
+                className="mt-3"
+                size="sm"
+                variant="ghost"
+                onClick={() =>
+                  setTargetDetailId(
+                    targetDetailId === target.id ? null : target.id,
+                  )
+                }
+              >
+                {targetDetailId === target.id
+                  ? 'Tutup detail'
+                  : 'Detail target'}
+              </Button>
+              {targetDetailId === target.id && (
+                <div className="bg-muted/30 mt-2 rounded p-3 text-xs">
+                  <p>
+                    Dibuat:{' '}
+                    {targetDetail.data?.created_at
+                      ? new Date(targetDetail.data.created_at).toLocaleString()
+                      : 'Memuat…'}
+                  </p>
+                  <p>
+                    Diperbarui:{' '}
+                    {targetDetail.data?.updated_at
+                      ? new Date(targetDetail.data.updated_at).toLocaleString()
+                      : '—'}
+                  </p>
+                  <p className="mt-2">
+                    Metadata:{' '}
+                    <code className="break-all">
+                      {JSON.stringify(
+                        targetDetail.data?.metadata ?? target.metadata ?? {},
+                      )}
+                    </code>
+                  </p>
+                  {targetDetail.error && (
+                    <FormError error={targetDetail.error} />
+                  )}
+                </div>
+              )}
               {canWriteTarget(target.id) && (
                 <Button
                   className="mt-3"
@@ -556,6 +882,11 @@ function TrackingManagementContent({
               )}
             </article>
           ))}
+          <PageControls
+            stack={targetCursors}
+            setStack={setTargetCursors}
+            next={targets.data?.next_cursor}
+          />
         </section>
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -571,12 +902,22 @@ function TrackingManagementContent({
               </Button>
             )}
           </div>
+          <input
+            aria-label="Cari device"
+            className="bg-background h-9 w-full rounded-md border px-3 text-sm"
+            value={deviceSearch}
+            onChange={(event) => {
+              setDeviceSearch(event.target.value)
+              setDeviceCursors([null])
+            }}
+            placeholder="Cari nama device…"
+          />
           {devices.isLoading && <p role="status">Memuat device…</p>}
           {devices.error && <FormError error={devices.error} />}
-          {devices.data?.length === 0 && (
+          {devices.data?.data?.length === 0 && (
             <Empty text="Belum ada device terdaftar." />
           )}
-          {devices.data?.map((device) => (
+          {devices.data?.data?.map((device) => (
             <article
               className="bg-background rounded-xl border p-4"
               key={device.id}
@@ -602,49 +943,102 @@ function TrackingManagementContent({
                       tidak dihapus.
                     </p>
                   )}
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Metadata: {JSON.stringify(device.metadata ?? {})}
+                  </p>
                 </div>
                 {(canRotateDevice(device.id) || canWriteDevice(device.id)) && (
                   <div className="flex flex-wrap gap-2">
+                    {canWriteDevice(device.id) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setDeviceToEdit(device)}
+                      >
+                        Edit detail
+                      </Button>
+                    )}
                     {canRotateDevice(device.id) && (
                       <Button
                         size="sm"
                         variant="outline"
-                        disabled={!device.enabled || busy}
+                        disabled={busy}
+                        onClick={() => {
+                          setCredentialListDevice(device)
+                          setCredentialCursors([null])
+                        }}
+                      >
+                        Credentials
+                      </Button>
+                    )}
+                    {canRotateDevice(device.id) && device.enabled && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
                         onClick={() => setCredentialDevice(device)}
                       >
                         <KeyRound /> Terbitkan / rotasi token
                       </Button>
                     )}
-                    {canWriteDevice(device.id) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() =>
-                          setDeviceEnabled.mutate({
-                            device,
-                            enabled: !device.enabled,
-                          })
-                        }
-                      >
-                        {device.enabled ? 'Nonaktifkan' : 'Aktifkan'}
-                      </Button>
-                    )}
+                    {canWriteDevice(device.id) &&
+                      (device.enabled ? (
+                        <ConfirmAction
+                          label="Nonaktifkan"
+                          confirmation="Credential aktif dicabut. Histori tetap tersimpan; mengaktifkan kembali tidak memulihkan credential."
+                          variant="destructive"
+                          onConfirm={async () => {
+                            await setDeviceEnabled.mutateAsync({
+                              device,
+                              enabled: false,
+                            })
+                          }}
+                        />
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() =>
+                            setDeviceEnabled.mutate({ device, enabled: true })
+                          }
+                        >
+                          Aktifkan
+                        </Button>
+                      ))}
                   </div>
                 )}
               </div>
             </article>
           ))}
+          <PageControls
+            stack={deviceCursors}
+            setStack={setDeviceCursors}
+            next={devices.data?.next_cursor}
+          />
         </section>
       </div>
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">Tracking sessions</h2>
+        <select
+          aria-label="Filter status session"
+          className="bg-background h-9 rounded-md border px-3 text-sm"
+          value={sessionStatus}
+          onChange={(event) => {
+            setSessionStatus(event.target.value)
+            setSessionCursors([null])
+          }}
+        >
+          <option value="">Semua status</option>
+          <option value="active">Aktif</option>
+          <option value="ended">Selesai</option>
+        </select>
         {trackingSessions.isLoading && <p role="status">Memuat session…</p>}
         {trackingSessions.error && <FormError error={trackingSessions.error} />}
-        {trackingSessions.data?.length === 0 && (
+        {trackingSessions.data?.data?.length === 0 && (
           <Empty text="Belum ada tracking session. Device session_only memerlukan session aktif sebelum posisi dapat tersimpan." />
         )}
-        {trackingSessions.data?.map((session) => (
+        {trackingSessions.data?.data?.map((session) => (
           <article
             className="bg-background flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4"
             key={session.id}
@@ -652,11 +1046,13 @@ function TrackingManagementContent({
             <div>
               <p className="font-medium">
                 {session.status === 'active' ? 'Aktif' : 'Selesai'} ·{' '}
-                {targets.data?.find((target) => target.id === session.target_id)
-                  ?.name ?? 'Target'}{' '}
+                {targets.data?.data?.find(
+                  (target) => target.id === session.target_id,
+                )?.name ?? 'Target'}{' '}
                 /{' '}
-                {devices.data?.find((device) => device.id === session.device_id)
-                  ?.name ?? 'Device'}
+                {devices.data?.data?.find(
+                  (device) => device.id === session.device_id,
+                )?.name ?? 'Device'}
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
                 Mulai {new Date(session.started_at).toLocaleString()} ·{' '}
@@ -666,17 +1062,23 @@ function TrackingManagementContent({
             {session.status === 'active' &&
               canWriteTarget(session.target_id) &&
               canWriteDevice(session.device_id) && (
-                <Button
-                  size="sm"
+                <ConfirmAction
+                  label="Akhiri session"
                   variant="destructive"
+                  confirmation="Session berakhir permanen pada waktu server saat ini; histori lokasi dipertahankan."
                   disabled={busy}
-                  onClick={() => endSession.mutate(session)}
-                >
-                  Akhiri session
-                </Button>
+                  onConfirm={async () => {
+                    await endSession.mutateAsync(session)
+                  }}
+                />
               )}
           </article>
         ))}
+        <PageControls
+          stack={sessionCursors}
+          setStack={setSessionCursors}
+          next={trackingSessions.data?.next_cursor}
+        />
       </section>
       {!canManageAny && !isAdmin && (
         <p className="text-muted-foreground text-xs">
@@ -696,14 +1098,51 @@ function Empty({ text }: { text: string }) {
   )
 }
 
+function PageControls({
+  stack,
+  setStack,
+  next,
+}: {
+  stack: (string | null)[]
+  setStack: React.Dispatch<React.SetStateAction<(string | null)[]>>
+  next?: string | null
+}) {
+  return (
+    <div className="flex justify-end gap-2">
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={stack.length < 2}
+        onClick={() => setStack((items) => items.slice(0, -1))}
+      >
+        Sebelumnya
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={!next}
+        onClick={() => {
+          if (next) setStack((items) => [...items, next])
+        }}
+      >
+        Berikutnya
+      </Button>
+    </div>
+  )
+}
+
 function CredentialRotationForm({
   busy,
   device,
+  actionLabel = 'Konfirmasi autentikasi sebelum rotasi token',
+  submitLabel = 'Konfirmasi dan rotasi',
   onCancel,
   onSubmit,
 }: {
   busy: boolean
   device: Device
+  actionLabel?: string
+  submitLabel?: string
   onCancel: () => void
   onSubmit: (value: z.infer<typeof reauthenticationSchema>) => Promise<void>
 }) {
@@ -726,7 +1165,7 @@ function CredentialRotationForm({
       })}
     >
       <h3 className="font-medium sm:col-span-2">
-        Konfirmasi autentikasi sebelum rotasi token — {device.name}
+        {actionLabel} — {device.name}
       </h3>
       <label className="grid gap-1 text-sm">
         Password saat ini
@@ -748,7 +1187,7 @@ function CredentialRotationForm({
       </label>
       <div className="flex gap-2 sm:col-span-2">
         <Button size="sm" disabled={busy} type="submit">
-          Konfirmasi dan rotasi
+          {submitLabel}
         </Button>
         <Button size="sm" type="button" variant="outline" onClick={onCancel}>
           Batal
@@ -779,6 +1218,7 @@ function TargetForm({
     defaultValues: {
       name: target?.name ?? '',
       external_ref: target?.external_ref ?? '',
+      metadata_json: JSON.stringify(target?.metadata ?? {}, null, 2),
     },
   })
   return (
@@ -795,6 +1235,18 @@ function TargetForm({
           {...form.register('name')}
         />
       </label>
+      <label className="grid gap-1 text-sm sm:col-span-2">
+        Metadata (JSON object)
+        <textarea
+          className="bg-background min-h-24 rounded-md border p-3 font-mono text-xs"
+          {...form.register('metadata_json')}
+        />
+      </label>
+      {form.formState.errors.metadata_json && (
+        <p role="alert" className="text-destructive text-xs sm:col-span-2">
+          Metadata harus berupa objek JSON valid, maksimal 16 KiB.
+        </p>
+      )}
       <label className="grid gap-1 text-sm">
         External reference (opsional)
         <input
@@ -821,7 +1273,11 @@ function DeviceForm({
 }) {
   const form = useForm<z.infer<typeof deviceSchema>>({
     resolver: zodResolver(deviceSchema),
-    defaultValues: { protocol: 'http-json', ingestion_policy: 'session_only' },
+    defaultValues: {
+      protocol: 'http-json',
+      ingestion_policy: 'session_only',
+      metadata_json: '{}',
+    },
   })
   return (
     <InlineForm
@@ -865,9 +1321,87 @@ function DeviceForm({
           {allowAlways && <option value="always">always</option>}
         </select>
       </label>
+      <label className="grid gap-1 text-sm sm:col-span-2">
+        Metadata (JSON object)
+        <textarea
+          className="bg-background min-h-24 rounded-md border p-3 font-mono text-xs"
+          {...form.register('metadata_json')}
+        />
+      </label>
+      {form.formState.errors.metadata_json && (
+        <p role="alert" className="text-destructive text-xs sm:col-span-2">
+          Metadata harus berupa objek JSON valid, maksimal 16 KiB.
+        </p>
+      )}
       <p className="text-muted-foreground text-xs sm:col-span-2">
         Registrasi tidak otomatis menerbitkan token atau memulai tracking
         session. Default mengikuti kebijakan aman session_only.
+      </p>
+    </InlineForm>
+  )
+}
+function DeviceEditForm({
+  busy,
+  device,
+  allowAlways,
+  onCancel,
+  onSubmit,
+}: {
+  busy: boolean
+  device: Device
+  allowAlways: boolean
+  onCancel: () => void
+  onSubmit: (value: z.infer<typeof deviceEditSchema>) => void
+}) {
+  const form = useForm<z.infer<typeof deviceEditSchema>>({
+    resolver: zodResolver(deviceEditSchema),
+    defaultValues: {
+      name: device.name,
+      ingestion_policy: device.ingestion_policy,
+      metadata_json: JSON.stringify(device.metadata ?? {}, null, 2),
+    },
+  })
+  return (
+    <InlineForm
+      title={`Edit device — ${device.name}`}
+      busy={busy}
+      onCancel={onCancel}
+      onSubmit={form.handleSubmit(onSubmit)}
+    >
+      <label className="grid gap-1 text-sm">
+        Nama
+        <input
+          className="bg-background h-9 rounded-md border px-3"
+          {...form.register('name')}
+        />
+      </label>
+      <label className="grid gap-1 text-sm">
+        Kebijakan ingestion
+        <select
+          className="bg-background h-9 rounded-md border px-3"
+          {...form.register('ingestion_policy')}
+        >
+          <option value="session_only">session_only</option>
+          {(allowAlways || device.ingestion_policy === 'always') && (
+            <option value="always">always</option>
+          )}
+        </select>
+      </label>
+      <label className="grid gap-1 text-sm sm:col-span-2">
+        Metadata (JSON object)
+        <textarea
+          className="bg-background min-h-24 rounded-md border p-3 font-mono text-xs"
+          {...form.register('metadata_json')}
+        />
+      </label>
+      {form.formState.errors.metadata_json && (
+        <p role="alert" className="text-destructive text-xs sm:col-span-2">
+          Metadata harus berupa objek JSON valid, maksimal 16 KiB.
+        </p>
+      )}
+      <p className="text-muted-foreground text-xs sm:col-span-2">
+        Protocol dan identifier bersifat tetap. Perubahan ingestion_policy tidak
+        menghapus sesi atau histori.
       </p>
     </InlineForm>
   )

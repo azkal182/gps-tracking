@@ -17,6 +17,7 @@ import {
 } from '@/pages/auth-pages'
 import { OrganizationPage } from '@/pages/organization-page'
 import { SessionsPage } from '@/pages/sessions-page'
+import { PlatformOrganizationsPage } from '@/features/organization/platform-organizations-page'
 
 const OverviewPage = lazy(() => import('@/pages/overview-page'))
 const TrackingManagementPage = lazy(() =>
@@ -67,6 +68,10 @@ function AppRoutes() {
             <Route index element={<Navigate replace to="/overview" />} />
             <Route path="overview" element={<OverviewPage />} />
             <Route path="organization" element={<OrganizationPage />} />
+            <Route
+              path="platform/organizations"
+              element={<PlatformOrganizationsPage />}
+            />
             <Route path="sessions" element={<SessionsPage />} />
             <Route path="devices" element={<TrackingManagementPage />} />
             <Route path="live" element={<LiveMapPage />} />

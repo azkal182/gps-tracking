@@ -1,7 +1,7 @@
 # PILOT-01 — Image dan deployment preflight
 
 Tanggal: 2026-10-20
-Status: **blocked — packaging dan panduan siap; deployment staging belum tersedia**
+Status: **done — preflight staging lulus; uji UI dan tenant lintas organisasi ditunda atas arahan pengguna**
 
 ## Perubahan
 
@@ -68,4 +68,8 @@ Uji kompatibilitas menjalankan API image sebelumnya terhadap schema staging saat
 
 Restore aktual dump `tracker-20261020T065642Z.dump` lulus di database `template0` pada container PostGIS sementara dengan `pg_restore --no-owner --no-acl --exit-on-error`, role capability sintetis, dan jaringan Docker `none`. Restore berisi 19 migrasi dan PostGIS 3.5.7; container dihapus setelah verifikasi. Uji ini tidak mengukur RPO/RTO maupun pemulihan dari salinan off-host.
 
-Portal session yang tersedia menunjukkan belum ada organisasi aktif atau device, sehingga smoke map/history dengan titik sintetis dan lintas-organisasi terautentikasi belum dapat dilakukan tanpa menyiapkan data tenant. Checklist domain, SMTP, host, dan backup terverifikasi; konfigurasi tile staging masih perlu dicek bersama smoke map. PILOT-01 tetap blocked sampai verifikasi tenant dan map tersebut selesai serta evidence dicatat.
+Portal session yang tersedia menunjukkan belum ada organisasi aktif atau device, sehingga smoke map/history dengan titik sintetis dan lintas-organisasi terautentikasi tidak dilakukan. Pengguna secara eksplisit meminta pemeriksaan tersebut dilewati dan akan memberi tahu saat melakukan uji coba sendiri. Ini adalah pemeriksaan yang ditunda, bukan hasil lulus; konfigurasi tile dan isolasi antar-organisasi melalui sesi terautentikasi tetap belum diverifikasi di staging. Atas arahan pengguna, pemeriksaan itu tidak lagi menjadi blocker PILOT-01. Verifikasi staging yang selesai—health/readiness, aktivasi/login yang dikonfirmasi pengguna, retention, restore, serta startup/readiness dan penolakan header tenant tanpa sesi pada image sebelumnya—dicatat di atas.
+
+## Keputusan penutupan task (2026-10-20)
+
+Pengguna mengarahkan agar pemeriksaan peta/histori dan tenant lintas organisasi dilewati untuk saat ini, dan akan memberi tahu ketika uji coba manual berlangsung. PILOT-01 ditutup berdasarkan bukti preflight/deployment yang tersedia. Tidak ada klaim bahwa peta, histori, konfigurasi tile, atau akses lintas-organisasi terautentikasi telah lulus; jika uji coba pengguna menemukan masalah, buka kembali PILOT-01 atau catat task perbaikan yang sesuai beserta evidence aktual.
