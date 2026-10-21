@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { portalErrorMessage } from '@/api/client'
 import { Button } from '@/components/ui/button'
 
 export function ConfirmAction({
@@ -18,6 +19,7 @@ export function ConfirmAction({
 }) {
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   if (!confirming) {
     return (
@@ -25,7 +27,10 @@ export function ConfirmAction({
         size="sm"
         variant={variant}
         disabled={disabled}
-        onClick={() => setConfirming(true)}
+        onClick={() => {
+          setError(null)
+          setConfirming(true)
+        }}
       >
         {label}
       </Button>
@@ -45,9 +50,12 @@ export function ConfirmAction({
         disabled={busy || disabled}
         onClick={async () => {
           setBusy(true)
+          setError(null)
           try {
             await onConfirm()
             setConfirming(false)
+          } catch (cause) {
+            setError(portalErrorMessage(cause))
           } finally {
             setBusy(false)
           }
@@ -59,10 +67,18 @@ export function ConfirmAction({
         size="sm"
         variant="outline"
         disabled={busy}
-        onClick={() => setConfirming(false)}
+        onClick={() => {
+          setError(null)
+          setConfirming(false)
+        }}
       >
         Anulir
       </Button>
+      {error && (
+        <p className="text-destructive text-sm" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   )
 }

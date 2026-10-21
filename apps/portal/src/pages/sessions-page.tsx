@@ -8,6 +8,8 @@ export function SessionsPage() {
   const auth = usePortalAuth()
   const queryClient = useQueryClient()
   const [cursors, setCursors] = useState<(string | null)[]>([null])
+  const [revokingId, setRevokingId] = useState<string | null>(null)
+  const [revokeError, setRevokeError] = useState<string | null>(null)
   const cursor = cursors.at(-1) ?? null
   const sessions = useQuery({
     queryKey: ['auth', auth.me?.user.id, 'sessions', cursor],
@@ -34,6 +36,17 @@ export function SessionsPage() {
     if (sessions.data?.data.find((item) => item.id === id)?.current)
       await auth.logout()
   }
+  async function handleRevoke(id: string) {
+    setRevokeError(null)
+    setRevokingId(id)
+    try {
+      await revoke(id)
+    } catch (error) {
+      setRevokeError(portalErrorMessage(error))
+    } finally {
+      setRevokingId(null)
+    }
+  }
   return (
     <section className="mx-auto max-w-4xl space-y-6">
       <header>
@@ -48,6 +61,11 @@ export function SessionsPage() {
       {sessions.error && (
         <p role="alert" className="text-destructive text-sm">
           {portalErrorMessage(sessions.error)}
+        </p>
+      )}
+      {revokeError && (
+        <p role="alert" className="text-destructive text-sm">
+          {revokeError}
         </p>
       )}
       <div className="bg-background divide-y rounded-xl border">
@@ -70,11 +88,16 @@ export function SessionsPage() {
               </p>
             </div>
             <Button
+              disabled={revokingId === session.id}
               size="sm"
               variant="outline"
-              onClick={() => void revoke(session.id).catch(() => undefined)}
+              onClick={() => void handleRevoke(session.id)}
             >
-              {session.current ? 'Keluar' : 'Cabut sesi'}
+              {revokingId === session.id
+                ? 'Memproses…'
+                : session.current
+                  ? 'Keluar'
+                  : 'Cabut sesi'}
             </Button>
           </article>
         ))}

@@ -175,7 +175,7 @@ export function PlatformOrganizationsPage() {
               onChange={(event) => setReissueEmail(event.target.value)}
             />
           </label>
-          <Button className="self-end" size="sm">
+          <Button className="self-end" size="sm" type="submit">
             Kirim ulang undangan
           </Button>
           <Button

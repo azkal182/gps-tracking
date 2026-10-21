@@ -43,6 +43,8 @@ beforeEach(() => {
           mfa_enabled: true,
           memberships: [],
         })
+      if (url.includes('/auth/csrf'))
+        return json({ csrf_token: 'csrf-platform-test' })
       if (url.includes('/platform/organizations'))
         return json({ data: [organization], next_cursor: null })
       if (url.includes('/organizations'))
@@ -99,6 +101,54 @@ describe('platform organization management', () => {
     expect(
       screen.getByText('Konfirmasi pembuatan organisasi'),
     ).toBeInTheDocument()
+  })
+
+  it('submits the initial-admin resend form and sends the request after reauthentication', async () => {
+    const user = userEvent.setup()
+    const fetchMock = vi.mocked(fetch)
+    render(<App />)
+    await user.click(
+      await screen.findByRole('link', { name: 'Organisasi platform' }),
+    )
+    await user.click(
+      await screen.findByRole('button', { name: 'Undang ulang admin awal' }),
+    )
+    const emailFields = await screen.findAllByLabelText('Email admin awal')
+    await user.type(emailFields[0], 'admin@example.invalid')
+    await user.click(
+      screen.getByRole('button', { name: 'Kirim ulang undangan' }),
+    )
+
+    expect(
+      await screen.findByText(
+        'Kirim ulang undangan admin awal untuk Operations',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        urlOf(input).includes('/admin-invitations'),
+      ),
+    ).toBe(false)
+
+    await user.type(
+      screen.getByLabelText('Password saat ini'),
+      'synthetic long password',
+    )
+    await user.click(screen.getByRole('button', { name: 'Konfirmasi' }))
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([input]) => {
+          const request =
+            input instanceof Request ? input : new Request(input)
+          return (
+            request.url.includes(
+              `/platform/organizations/${organization.id}/admin-invitations`,
+            ) && request.method === 'POST'
+          )
+        }),
+      ).toBe(true),
+    )
   })
 
   it('requires recent authentication before changing a member role', async () => {
