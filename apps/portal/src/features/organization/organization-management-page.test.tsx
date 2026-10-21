@@ -139,8 +139,7 @@ describe('platform organization management', () => {
     await waitFor(() =>
       expect(
         fetchMock.mock.calls.some(([input]) => {
-          const request =
-            input instanceof Request ? input : new Request(input)
+          const request = input instanceof Request ? input : new Request(input)
           return (
             request.url.includes(
               `/platform/organizations/${organization.id}/admin-invitations`,

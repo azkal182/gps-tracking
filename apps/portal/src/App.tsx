@@ -63,10 +63,7 @@ function AppRoutes() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/activate" element={<ActivatePage />} />
-          <Route
-            path="/accept-invitation"
-            element={<AcceptInvitationPage />}
-          />
+          <Route path="/accept-invitation" element={<AcceptInvitationPage />} />
           <Route path="/invite/accept" element={<AcceptInvitationPage />} />
           <Route path="/" element={<AuthenticatedPortal />}>
             <Route index element={<Navigate replace to="/overview" />} />
