@@ -229,6 +229,7 @@ export function PlatformOrganizationsPage() {
             className="self-end"
             size="sm"
             disabled={createOrganization.isPending}
+            type="submit"
           >
             Buat dan undang admin
           </Button>

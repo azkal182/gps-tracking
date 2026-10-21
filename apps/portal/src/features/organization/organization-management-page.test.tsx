@@ -72,6 +72,35 @@ describe('platform organization management', () => {
     ).toBeInTheDocument()
   })
 
+  it('opens recent-auth confirmation when submitting the create-organization form', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(
+      await screen.findByRole('link', { name: 'Organisasi platform' }),
+    )
+    await user.type(
+      await screen.findByLabelText('Nama organisasi'),
+      'Test organization',
+    )
+    await user.type(
+      screen.getByLabelText('Email admin awal'),
+      'admin@example.invalid',
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Buat dan undang admin' }),
+    )
+
+    expect(
+      await screen.findByRole('form', {
+        name: 'Konfirmasi autentikasi terbaru',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Konfirmasi pembuatan organisasi'),
+    ).toBeInTheDocument()
+  })
+
   it('requires recent authentication before changing a member role', async () => {
     const fetchMock = vi.mocked(fetch)
     fetchMock.mockImplementation(
